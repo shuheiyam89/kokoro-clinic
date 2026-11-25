@@ -146,3 +146,6 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .op-box.nurse { border-color: #f39ab0; }
 .op-box.nurse p::before { content: '助手ミケ：'; color: #f9b8c8; }
 .op-next { position: absolute; right: 14px; bottom: 6px; color: #ffe0a6; animation: bob 1s infinite; }
+/* スキップは右下 */
+.skip { top: auto; bottom: calc(14px + env(safe-area-inset-bottom)); right: 12px; }
+.op-box { bottom: calc(64px + env(safe-area-inset-bottom)); }

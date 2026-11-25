@@ -88,7 +88,7 @@
   // ---------- タイトル ----------
   $('btn-start').onclick = function () {
     music();
-    if (!save.opening) startOpening(); else { buildList(); show('scr-select'); }
+    buildList(); show('scr-select');
   };
   $('btn-opening').onclick = function () { music(); startOpening(); };
   $('btn-howto').onclick = function () {
@@ -125,12 +125,13 @@
     clearInterval(opTyping);
     opTyping = setInterval(function () { i++; el.textContent = op.text.slice(0, i); if (i >= op.text.length) { clearInterval(opTyping); opTyping = null; } }, 55);
   }
-  function endOpening() { clearInterval(opTyping); opTyping = null; save.opening = true; store(); buildList(); show('scr-select'); }
+  function endOpening() { clearInterval(opTyping); opTyping = null; opIdx = OPENING.length; show('scr-title'); }
   $('scr-opening').addEventListener('click', function () {
+    music();
     if (opTyping) { clearInterval(opTyping); opTyping = null; $('op-text').textContent = OPENING[opIdx].text; return; }
     opIdx++; showOp();
   });
-  $('btn-skip').addEventListener('click', function (e) { e.stopPropagation(); endOpening(); });
+  $('btn-skip').addEventListener('click', function (e) { e.stopPropagation(); music(); endOpening(); });
 
   // ---------- 予約リスト ----------
   $('btn-sel-back').onclick = function () { show('scr-title'); };
@@ -324,4 +325,6 @@
   sizeCanvases();
   fitHeight();
   requestAnimationFrame(loop);
+  // 起動したらオープニングから始める
+  startOpening();
 })();
