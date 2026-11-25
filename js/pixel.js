@@ -81,11 +81,13 @@ var Pixel = (function () {
     c.beginPath(); c.moveTo(14, 50); c.lineTo(46, 50); c.lineTo(80, 118); c.lineTo(30, 118); c.closePath(); c.fill(); c.restore();
   }
   function sofaBack(c) {
-    R(c, 44, 56, 72, 24, '#7a6fd0'); E(c, 80, 57, 36, 3, '#9b91ea'); R(c, 46, 56, 68, 2, '#b3aaf5');
-    R(c, 79, 59, 2, 18, '#6c61c2');
+    R(c, 44, 54, 72, 21, '#7a6fd0'); E(c, 80, 55, 36, 3, '#9b91ea'); R(c, 46, 54, 68, 2, '#b3aaf5');
+    R(c, 79, 57, 2, 16, '#6c61c2');
+    // 座面（上から見える面）
+    R(c, 44, 74, 72, 7, '#8f85e3'); R(c, 44, 74, 72, 1, '#b3aaf5'); R(c, 79, 75, 2, 6, '#8077d6');
   }
   function sofaFront(c) {
-    R(c, 44, 80, 72, 10, '#6a5fc0'); R(c, 44, 80, 72, 2, '#8f85e3');
+    R(c, 44, 81, 72, 9, '#6a5fc0'); R(c, 44, 81, 72, 1, '#a59cf0');
     R(c, 36, 64, 12, 28, '#635ab6'); E(c, 42, 64, 6, 2, '#857ade');
     R(c, 112, 64, 12, 28, '#635ab6'); E(c, 118, 64, 6, 2, '#857ade');
     R(c, 44, 88, 72, 1, '#7fe8ff');
@@ -151,13 +153,13 @@ var Pixel = (function () {
   // プルル：ひざを抱えた緑のゼリー星人
   function pururu(c, st) {
     var G = '#8fdc5a', GS = '#62b84a', GL = '#c4f08a', GD = '#3f8a3a';
-    var wob = Math.round(Math.sin(st.t / 320) * 0.7), hy = 60 + wob;
+    var wob = Math.round(Math.sin(st.t / 320) * 0.7), hy = 56 + wob;
     antenna(c, 73, hy - 12, 68, hy - 20, GD, '#a8ec6a');
     antenna(c, 87, hy - 12, 92, hy - 20, GD, '#a8ec6a');
-    E(c, 80, 77, 11, 7, GS);
-    E(c, 75, 78, 4, 5, G); E(c, 85, 78, 4, 5, G);
-    R(c, 71, 83, 7, 3, GS); R(c, 82, 83, 7, 3, GS);
-    R(c, 70, 74, 20, 3, G); R(c, 70, 76, 20, 1, GS);
+    E(c, 80, 73, 11, 7, GS);
+    E(c, 75, 74, 4, 5, G); E(c, 85, 74, 4, 5, G);
+    R(c, 71, 78, 7, 3, GS); R(c, 82, 78, 7, 3, GS); R(c, 71, 78, 7, 1, G); R(c, 82, 78, 7, 1, G);
+    R(c, 70, 70, 20, 3, G); R(c, 70, 72, 20, 1, GS);
     E(c, 81, hy + 1, 15, 13, GS); E(c, 80, hy, 15, 13, G);
     E(c, 73, hy - 7, 4, 2, GL); P(c, 70, hy - 8, '#ffffff'); P(c, 90, hy + 3, GL); P(c, 88, hy + 6, GL);
     // パン屋の白いバンダナ
@@ -174,11 +176,16 @@ var Pixel = (function () {
     // 後ろ髪
     E(c, 80, hy + 1, 17, 15, HS); R(c, 63, hy + 1, 34, 14, HS); E(c, 65, hy + 15, 3, 2, HS); E(c, 95, hy + 15, 3, 2, HS);
     // 体（宇宙服ワンピース）
-    poly(c, [[72, 68 + b], [88, 68 + b], [94, 87], [66, 87]], SUS);
-    poly(c, [[72, 68 + b], [87, 68 + b], [91, 87], [66, 87]], SU);
-    R(c, 70, 74, 20, 1, '#c9b8f6'); R(c, 79, 70 + b, 2, 16, '#c9e8ff');
+    // 足（座面のふちから前に下ろす）
+    R(c, 74, 80, 4, 9, SK); R(c, 82, 80, 4, 9, SK); R(c, 77, 80, 1, 9, SKS); R(c, 85, 80, 1, 9, SKS);
+    R(c, 73, 88, 6, 4, SU); R(c, 81, 88, 6, 4, SU); R(c, 73, 91, 6, 1, SUS); R(c, 81, 91, 6, 1, SUS);
+    P(c, 75, 89, '#5fd8ff'); P(c, 83, 89, '#5fd8ff');
+    poly(c, [[72, 68 + b], [88, 68 + b], [95, 82], [65, 82]], SUS);
+    poly(c, [[72, 68 + b], [87, 68 + b], [92, 82], [65, 82]], SU);
+    R(c, 66, 81, 28, 1, SUS);
+    R(c, 70, 74, 20, 1, '#c9b8f6'); R(c, 79, 70 + b, 2, 11, '#c9e8ff');
     E(c, 80, 71 + b, 2, 2, '#5fd8ff'); P(c, 79, 70 + b, '#ffffff');
-    E(c, 72, 80, 2, 2, SK); E(c, 88, 80, 2, 2, SK);
+    E(c, 73, 78, 2, 2, SK); E(c, 87, 78, 2, 2, SK);
     R(c, 78, hy + 9, 4, 3, SKS);
     // 顔
     E(c, 80, hy, 12, 11, SK);
@@ -199,13 +206,16 @@ var Pixel = (function () {
     var B = '#4f86d8', BS = '#3a66b0', BL = '#7fb0f0', BE = '#a8d4f8', CL = '#2e3366', CLS = '#22264d', GOLD = '#f0a830';
     var b = Math.round(Math.sin(st.t / 800) * 0.6), hy = 47 + b;
     // しっぽ
-    [[106, 84, 4], [111, 82, 4], [115, 78, 3], [117, 73, 3], [116, 69, 2]].forEach(function (p) { E(c, p[0], p[1] + 1, p[2], p[2], BS); E(c, p[0], p[1], p[2], p[2], B); });
+    [[103, 78, 4], [108, 76, 4], [112, 72, 3], [114, 67, 3], [113, 63, 2]].forEach(function (p) { E(c, p[0], p[1] + 1, p[2], p[2], BS); E(c, p[0], p[1], p[2], p[2], B); });
     antenna(c, 75, hy - 9, 71, hy - 19, CLS, '#f5a623');
     antenna(c, 85, hy - 9, 89, hy - 19, CLS, '#f5a623');
     // マント
-    E(c, 80, 65 + b, 21, 7, CLS); R(c, 59, 65 + b, 42, 23, CLS); R(c, 61, 65 + b, 38, 23, CL);
-    R(c, 76, 62 + b, 8, 26, '#1b1f40'); R(c, 76, 62 + b, 1, 26, GOLD); R(c, 83, 62 + b, 1, 26, GOLD);
-    R(c, 61, 78, 38, 2, '#4a3a2a'); R(c, 78, 77, 4, 4, GOLD); P(c, 79, 78, '#1b1f40');
+    // 足（ズボンとブーツ）
+    R(c, 67, 80, 9, 9, '#1b1f40'); R(c, 84, 80, 9, 9, '#1b1f40'); R(c, 74, 80, 2, 9, '#262b55'); R(c, 91, 80, 2, 9, '#262b55');
+    R(c, 65, 88, 12, 5, '#2a2d5c'); R(c, 83, 88, 12, 5, '#2a2d5c'); R(c, 65, 88, 12, 1, GOLD); R(c, 83, 88, 12, 1, GOLD);
+    E(c, 80, 65 + b, 21, 7, CLS); R(c, 59, 65 + b, 42, 17 - b, CLS); R(c, 61, 65 + b, 38, 17 - b, CL);
+    R(c, 76, 62 + b, 8, 20 - b, '#1b1f40'); R(c, 76, 62 + b, 1, 20 - b, GOLD); R(c, 83, 62 + b, 1, 20 - b, GOLD);
+    R(c, 61, 76, 38, 2, '#4a3a2a'); R(c, 78, 75, 4, 4, GOLD); P(c, 79, 76, '#1b1f40');
     R(c, 63, 55 + b, 7, 11, CL); R(c, 90, 55 + b, 7, 11, CL); R(c, 63, 55 + b, 7, 1, GOLD); R(c, 90, 55 + b, 7, 1, GOLD);
     E(c, 70, 80, 4, 3, BS); E(c, 70, 79, 4, 3, B); E(c, 90, 80, 4, 3, BS); E(c, 90, 79, 4, 3, B);
     // 頭
@@ -267,14 +277,16 @@ var Pixel = (function () {
     }
     c.drawImage(bgCache, 0, 0);
     sofaBack(c);
+    sofaFront(c);
     if (st.sprite && SPRITES[st.sprite] && st.visible !== false) {
       c.save();
-      if (st.alpha != null) c.globalAlpha = st.alpha;
+      if (st.alpha != null) c.globalAlpha = (st.alpha) * 0.3; else c.globalAlpha = 0.3;
+      E(c, 80, 80, 17, 2, '#2a2370');
+      c.globalAlpha = st.alpha != null ? st.alpha : 1;
       drawOutlined(c, SPRITES[st.sprite], st);
       c.restore();
       smoke(c, st);
     }
-    sofaFront(c);
     if (st.night) { c.save(); c.globalAlpha = 0.14; c.fillStyle = '#2b2f8f'; c.fillRect(0, 0, W, H); c.restore(); }
   }
 
