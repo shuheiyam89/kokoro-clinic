@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#2b2340">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>こころ診療所 ～ささやきカルテ～</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- タイトル -->
+  <section id="scr-title" class="screen active">
+    <div class="title-art"><canvas id="cv-title"></canvas></div>
+    <div class="title-box">
+      <p class="title-sub">宇宙ステーションの</p>
+      <h1>こころ診療所</h1>
+      <p class="title-sub2">～ささやきカルテ～</p>
+      <button class="btn big" id="btn-start">はじめる</button>
+      <button class="btn ghost" id="btn-howto">あそびかた</button>
+    </div>
+  </section>
+
+  <!-- 予約リスト -->
+  <section id="scr-select" class="screen">
+    <header class="bar"><button class="icon" id="btn-sel-back">←</button><h2>本日の予約</h2><span></span></header>
+    <p class="sel-lead">あなたはカウンセラー。今日も、悩みをかかえたお客様がやってくる。</p>
+    <ul id="patient-list"></ul>
+  </section>
+
+  <!-- 診察 -->
+  <section id="scr-session" class="screen">
+    <header class="bar">
+      <button class="icon" id="btn-quit">←</button>
+      <div class="who"><b id="s-name"></b><small id="s-species"></small></div>
+      <div class="trust" id="s-trust" aria-label="信頼度"></div>
+    </header>
+    <div class="stage">
+      <canvas id="cv-scene"></canvas>
+      <div class="phase-tag" id="phase-tag"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="dialog" id="dialog">
+      <div class="nametag" id="d-name"></div>
+      <canvas id="cv-nurse" width="24" height="24"></canvas>
+      <p id="d-text"></p>
+      <span class="next" id="d-next">▼</span>
+    </div>
+    <div class="tools">
+      <button class="tool" id="btn-karte">📋 カルテ<i id="karte-badge"></i></button>
+      <button class="tool" id="btn-log">💬 ログ</button>
+      <button class="tool truth" id="btn-truth" disabled>🔍 真実をつげる</button>
+    </div>
+    <form class="inputbar" id="form">
+      <input id="inp" type="text" autocomplete="off" enterkeyhint="send" placeholder="質問を入力…" maxlength="80">
+      <button class="btn send" id="btn-send" type="submit">送信</button>
+    </form>
+  </section>
+
+  <!-- モーダル -->
+  <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
+
+</div>
+<script src="js/data-patients.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/pixel.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

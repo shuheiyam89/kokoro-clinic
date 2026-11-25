@@ -1,0 +1,123 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: #1c1729; overflow: hidden; }
+body { font-family: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; color: #fff8ec; }
+#app { position: relative; max-width: 480px; margin: 0 auto; height: var(--app-h, 100dvh); background: #2b2340; overflow: hidden; }
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
+.screen.active { display: flex; }
+
+.btn { font: inherit; border: 0; border-radius: 10px; padding: 12px 18px; background: #f3b660; color: #3a2414; font-size: 17px; box-shadow: 0 4px 0 #b57a33; cursor: pointer; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b57a33; }
+.btn.big { font-size: 22px; padding: 14px 40px; }
+.btn.ghost { background: transparent; color: #f6dcb6; box-shadow: none; text-decoration: underline; }
+.btn:disabled { opacity: .45; }
+
+/* タイトル */
+.title-art { flex: 1; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.title-art canvas { width: 100%; }
+.title-box { text-align: center; padding: 18px 16px 34px; background: linear-gradient(#2b2340, #3a2c55); }
+.title-box h1 { margin: 2px 0; font-size: 40px; color: #ffe0a6; letter-spacing: 4px; text-shadow: 0 3px 0 #b5654b; font-weight: normal; }
+.title-sub { margin: 0; color: #c9b8f0; font-size: 15px; }
+.title-sub2 { margin: 0 0 22px; color: #f6c1c9; font-size: 16px; }
+.title-box .btn { display: block; margin: 10px auto 0; }
+
+/* ヘッダー */
+.bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; padding-top: max(8px, env(safe-area-inset-top)); background: #3a2c55; }
+.bar h2 { flex: 1; margin: 0; font-size: 18px; font-weight: normal; text-align: center; }
+.bar .icon { font: inherit; font-size: 20px; background: #54417a; color: #fff; border: 0; border-radius: 8px; width: 38px; height: 38px; }
+.who { flex: 1; line-height: 1.15; }
+.who b { font-weight: normal; font-size: 18px; color: #ffe0a6; }
+.who small { display: block; font-size: 12px; color: #c9b8f0; }
+.trust { font-size: 17px; letter-spacing: 1px; color: #ff7c95; white-space: nowrap; }
+.trust .off { color: #5d4d7c; }
+.trust.pulse { animation: pulse .5s; }
+.trust.down { animation: shake .4s; }
+@keyframes pulse { 50% { transform: scale(1.25); } }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+/* 予約リスト */
+.sel-lead { margin: 12px 16px 4px; font-size: 14px; color: #d8cdee; line-height: 1.6; }
+#patient-list { list-style: none; margin: 0; padding: 8px 12px 20px; overflow-y: auto; flex: 1; }
+#patient-list li { display: flex; gap: 12px; align-items: center; background: #fff6e6; color: #3a2a20; border-radius: 12px; padding: 10px; margin-bottom: 12px; position: relative; box-shadow: 0 4px 0 #c9b291; }
+#patient-list li.locked { opacity: .5; filter: grayscale(1); }
+#patient-list li canvas { width: 72px; height: 54px; border-radius: 8px; flex: none; }
+#patient-list .info { flex: 1; font-size: 14px; line-height: 1.45; }
+#patient-list .info b { font-size: 17px; font-weight: normal; }
+#patient-list .info .stars { color: #e08a2e; }
+#patient-list .stamp { position: absolute; right: 10px; top: 8px; border: 2px solid #d9443f; color: #d9443f; border-radius: 6px; padding: 0 6px; transform: rotate(-12deg); font-size: 14px; }
+
+/* 診察 */
+.stage { position: relative; background: #000; }
+.stage canvas { width: 100%; }
+.phase-tag { position: absolute; left: 8px; top: 8px; font-size: 12px; background: rgba(43,35,64,.85); padding: 3px 8px; border-radius: 6px; color: #ffe0a6; }
+.phase-tag:empty { display: none; }
+.phase-tag.counsel { background: #d9568a; color: #fff; }
+.toast { position: absolute; left: 8px; right: 8px; bottom: 8px; background: rgba(255,246,230,.96); color: #3a2a20; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.4; opacity: 0; transform: translateY(8px); transition: .3s; pointer-events: none; }
+.toast.show { opacity: 1; transform: none; }
+
+.dialog { position: relative; flex: 1; min-height: 92px; margin: 8px 10px 0; background: #fffaf0; color: #33261f; border-radius: 12px; padding: 18px 14px 14px; box-shadow: 0 0 0 3px #e2c99f inset; overflow-y: auto; }
+.nametag { position: absolute; left: 12px; top: -10px; background: #f3b660; color: #3a2414; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+.nametag:empty { display: none; }
+.dialog.nurse .nametag { background: #f39ab0; }
+.dialog.narr .nametag { display: none; }
+.dialog.narr p { color: #6b5a7e; }
+#cv-nurse { display: none; float: left; width: 40px; height: 40px; margin: 0 10px 4px 0; border-radius: 8px; }
+.dialog.nurse #cv-nurse { display: block; }
+#d-text { margin: 0; font-size: 17px; line-height: 1.65; white-space: pre-wrap; }
+.next { position: absolute; right: 12px; bottom: 6px; color: #d08a3a; animation: bob 1s infinite; display: none; }
+.dialog.more .next { display: block; }
+@keyframes bob { 50% { transform: translateY(3px); } }
+
+.tools { display: flex; gap: 6px; padding: 8px 10px 0; }
+.tool { font: inherit; flex: 1; border: 0; border-radius: 10px; padding: 9px 4px; background: #54417a; color: #fff; font-size: 14px; position: relative; }
+.tool.truth { background: #c94f7c; flex: 1.4; }
+.tool.truth:disabled { background: #4a3d63; color: #9c8fb8; }
+.tool.truth.ready { animation: glow 1.6s infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 12px #ff9ac0; } }
+.tool i { position: absolute; top: -4px; right: -2px; background: #ff5a6e; border-radius: 9px; font-style: normal; font-size: 11px; padding: 0 5px; display: none; }
+.tool i.on { display: block; }
+
+.inputbar { display: flex; gap: 6px; padding: 8px 10px 10px; }
+.inputbar input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 12px; border-radius: 10px; border: 2px solid #6f5c96; background: #fffaf0; color: #33261f; }
+.inputbar input:focus { outline: none; border-color: #f3b660; }
+.inputbar.diagnose input { border-color: #ff7aa8; background: #fff0f5; }
+.inputbar.counsel input { border-color: #ffb36b; background: #fff6ea; }
+.btn.send { padding: 0 16px; font-size: 16px; }
+
+/* モーダル */
+.modal { position: absolute; inset: 0; background: rgba(15,10,25,.7); display: none; align-items: flex-end; z-index: 10; }
+.modal.open { display: flex; }
+.sheet { width: 100%; max-height: 85%; background: #fff6e6; color: #33261f; border-radius: 16px 16px 0 0; padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
+#modal-body { overflow-y: auto; flex: 1; margin-bottom: 12px; font-size: 15px; line-height: 1.7; }
+#modal-body h3 { margin: 0 0 8px; font-weight: normal; font-size: 20px; color: #7a4a2a; }
+#modal-body h4 { margin: 14px 0 4px; font-weight: normal; color: #c94f7c; }
+.karte { width: 100%; border-collapse: collapse; font-size: 14px; }
+.karte th { text-align: left; white-space: nowrap; color: #7a5a3a; font-weight: normal; padding: 5px 8px 5px 0; vertical-align: top; border-bottom: 1px dashed #d8c3a0; }
+.karte td { padding: 5px 0; border-bottom: 1px dashed #d8c3a0; }
+.clues { margin: 0; padding-left: 0; list-style: none; }
+.clues li { background: #fff; border-left: 4px solid #f3b660; padding: 6px 8px; margin: 6px 0; border-radius: 4px; font-size: 14px; }
+.clues li.new { border-color: #ff5a6e; background: #fff0f2; }
+.log p { margin: 4px 0; font-size: 14px; }
+.log .me { color: #2f6fb0; }
+.log .narr { color: #8a7a9a; }
+.log .nurse { color: #c94f7c; }
+.howto li { margin-bottom: 6px; }
+.result { text-align: center; }
+.result .big { font-size: 26px; color: #c94f7c; margin: 6px 0; }
+
+/* キーボードが出ているとき：キャラの顔まわりだけ残して画面を詰める */
+#app.kb .stage canvas { height: calc(var(--app-h) * .28); object-fit: cover; object-position: 50% 38%; }
+#app.kb .tools { display: none; }
+#app.kb .dialog { min-height: 70px; }
+#app.kb .title-art, #app.kb .sel-lead { display: none; }
+
+/* 縦長スマホ：背景を縦いっぱいに広げ、キャラを大きく見せる */
+#scr-session .stage { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+#scr-session .stage canvas { width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; }
+#scr-session .dialog { flex: none; height: 148px; }
+#app.kb #scr-session .stage canvas { height: 100%; object-position: 50% 40%; }
+#app.kb #scr-session .dialog { height: 104px; }
+.nametag { top: 6px; }
+.dialog { padding-top: 30px; }
+.dialog.narr { padding-top: 16px; }
