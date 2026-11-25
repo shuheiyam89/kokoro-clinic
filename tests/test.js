@@ -2,10 +2,10 @@
 var fs = require('fs'), vm = require('vm'), path = require('path');
 var ctx = { console: console };
 vm.createContext(ctx);
-['data-patients.js', 'engine.js'].forEach(function (f) {
+['data-patients.js', 'data-flow.js', 'engine.js', 'story.js'].forEach(function (f) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'), ctx, { filename: f });
 });
-var P = vm.runInContext('PATIENTS', ctx), E = vm.runInContext('Engine', ctx);
+var P = vm.runInContext('PATIENTS', ctx), E = vm.runInContext('Engine', ctx), S = vm.runInContext('Story', ctx);
 var fails = 0;
 function play(pid, qs, truth, advice) {
   var p = P.filter(function (x) { return x.id === pid; })[0], st = E.newState(p);
@@ -42,5 +42,29 @@ var s3 = E.newState(pr); E.ask(pr, s3, 'あいうえお'); var r3 = E.ask(pr, s3
 var hinted = r3.lines.some(function (l) { return l.who === 'nurse'; });
 console.log((hinted ? 'OK  ' : 'NG  ') + '行き詰まるとヒントが出る');
 if (!hinted) fails++;
+
+// 台本の通しプレイ：mode=example は模範の言葉、mode=miss は毎回でたらめ（3回目で助手が代わりに進める）
+function flowPlay(p, mode) {
+  var g = S.start(p), steps = 0, assisted = 0;
+  var r = S.run(g);
+  while (r.waiting && steps < 200) {
+    steps++;
+    var a;
+    if (mode === 'example') a = S.answer(g, r.waiting.example);
+    else { a = S.answer(g, 'ほげほげ'); if (!a.ok) a = S.answer(g, 'ふがふが'); if (!a.ok) a = S.answer(g, 'もにゃもにゃ'); }
+    if (a.assisted) assisted++;
+    if (!a.ok) break;
+    r = S.run(g);
+  }
+  return { done: !!r.done && g.st.phase === 'done', assisted: assisted, clues: g.st.clues.length, trust: g.st.trust };
+}
+P.forEach(function (p) {
+  ['example', 'miss'].forEach(function (mode) {
+    var res = flowPlay(p, mode);
+    var ok = res.done && (mode === 'miss' || res.assisted === 0);
+    console.log((ok ? 'OK  ' : 'NG  ') + '台本 ' + p.name + ' [' + mode + '] クリア=' + res.done + ' 代行' + res.assisted + '回 手がかり' + res.clues + ' 信頼' + res.trust);
+    if (!ok) fails++;
+  });
+});
 console.log(fails ? fails + '件失敗' : 'すべて成功');
 process.exit(fails ? 1 : 0);

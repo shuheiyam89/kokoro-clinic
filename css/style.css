@@ -121,3 +121,28 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .nametag { top: 6px; }
 .dialog { padding-top: 30px; }
 .dialog.narr { padding-top: 16px; }
+
+/* ---- 台本進行・BGM・オープニング ---- */
+.title-links { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.title-links .btn { margin: 0; padding: 8px 10px; font-size: 15px; }
+.music-btn.off { opacity: .45; text-decoration: line-through; }
+.bar .icon.small { font-size: 16px; }
+.tool.small { flex: 0 0 48px; }
+.tool.hint { background: #3f7a6a; }
+.tool.hint:disabled { background: #4a3d63; color: #9c8fb8; }
+.dialog.me .nametag { background: #7fc6f0; color: #1f2347; }
+.dialog.think { background: #f1edff; box-shadow: 0 0 0 3px #b9a8f0 inset; }
+.dialog.think .nametag { background: #8f74d8; color: #fff; }
+.dialog.think p { color: #4a3a7a; }
+.inputbar.wait input { border-color: #f3b660; animation: inglow 1.4s infinite; }
+@keyframes inglow { 50% { box-shadow: 0 0 10px #f3b66099; } }
+.inputbar input:disabled { opacity: .6; }
+
+#scr-opening { background: #0b0d2a; }
+#cv-op { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.skip { position: absolute; right: 10px; top: max(10px, env(safe-area-inset-top)); z-index: 2; font: inherit; font-size: 14px; background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 6px 14px; }
+.op-box { position: absolute; left: 12px; right: 12px; bottom: calc(24px + env(safe-area-inset-bottom)); min-height: 120px; background: rgba(11,13,42,.78); border: 2px solid #8f84d6; border-radius: 14px; padding: 16px 16px 22px; }
+.op-box p { margin: 0; font-size: 18px; line-height: 1.75; color: #f4f0ff; white-space: pre-wrap; }
+.op-box.nurse { border-color: #f39ab0; }
+.op-box.nurse p::before { content: '助手ミケ：'; color: #f9b8c8; }
+.op-next { position: absolute; right: 14px; bottom: 6px; color: #ffe0a6; animation: bob 1s infinite; }

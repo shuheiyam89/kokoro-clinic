@@ -293,5 +293,50 @@ var Pixel = (function () {
     R(c, 5, 17, 2, 1, '#f4a3a8'); R(c, 17, 17, 2, 1, '#f4a3a8');
   }
 
-  return { W: W, H: H, render: render, nurse: nurse };
+  // ---------- オープニング：宇宙とステーション ----------
+  var STARS = [];
+  (function () { var s = 7; function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; } for (var i = 0; i < 90; i++) STARS.push([rnd() * W, rnd() * H, rnd()]); })();
+  function station(c, cx, cy, t) {
+    var i, a;
+    // ソーラーパネル
+    R(c, cx - 44, cy - 4, 14, 8, '#3a64c8'); R(c, cx + 30, cy - 4, 14, 8, '#3a64c8');
+    for (i = 0; i < 14; i += 3) { R(c, cx - 44 + i, cy - 4, 1, 8, '#6f9cf0'); R(c, cx + 30 + i, cy - 4, 1, 8, '#6f9cf0'); }
+    R(c, cx - 30, cy - 1, 8, 2, '#8a90b8'); R(c, cx + 22, cy - 1, 8, 2, '#8a90b8');
+    // リング（奥側）
+    for (a = Math.PI; a < Math.PI * 2; a += 0.02) R(c, cx + Math.cos(a) * 30, cy + 3 + Math.sin(a) * 8, 2, 2, '#7d86c0');
+    // 本体ドーム
+    E(c, cx + 1, cy + 1, 15, 12, '#8f96c8'); E(c, cx, cy, 15, 12, '#d6dbf5'); E(c, cx - 4, cy - 5, 6, 3, '#f4f6ff');
+    R(c, cx - 15, cy + 2, 30, 3, '#aab0dc');
+    // 窓の明かり
+    for (i = -12; i <= 12; i += 4) {
+      var on = ((t / 900 + i * 7) | 0) % 5 !== 0;
+      R(c, cx + i - 1, cy + 2, 2, 2, on ? (i % 8 === 0 ? '#7fe8ff' : '#ffe9a0') : '#5a6090');
+    }
+    // 診療所のピンクの窓
+    E(c, cx, cy - 3, 3, 2, '#ff9ac0'); P(c, cx - 1, cy - 4, '#ffffff');
+    // アンテナ
+    R(c, cx, cy - 20, 1, 8, '#8a90b8'); if (((t / 600) | 0) % 2) E(c, cx, cy - 21, 1, 1, '#ff5a7e');
+    // リング（手前側）
+    for (a = 0; a < Math.PI; a += 0.02) R(c, cx + Math.cos(a) * 30, cy + 3 + Math.sin(a) * 8, 2, 2, '#b9c0ee');
+  }
+  function renderSpace(c, t, zoom) {
+    R(c, 0, 0, W, 40, '#0b0d2a'); R(c, 0, 40, W, 40, '#11143b'); R(c, 0, 80, W, 40, '#171b4c');
+    c.save(); c.globalAlpha = 0.22; E(c, 30, 34, 34, 14, '#7a3fb0'); E(c, 128, 70, 40, 16, '#2f63b8'); c.restore();
+    STARS.forEach(function (s, i) {
+      var tw = 0.5 + 0.5 * Math.sin(t / 600 + i * 1.7);
+      c.save(); c.globalAlpha = 0.35 + tw * 0.65 * s[2]; P(c, s[0], s[1], i % 7 === 0 ? '#ffe9a0' : '#ffffff'); c.restore();
+    });
+    // 流れ星
+    var ph = (t % 7000) / 7000;
+    if (ph < 0.12) { var sx = 150 - ph * 900, sy = 8 + ph * 260; for (var k = 0; k < 8; k++) { c.save(); c.globalAlpha = 1 - k / 8; P(c, sx + k * 2, sy - k, '#ffffff'); c.restore(); } }
+    // 大きな惑星
+    E(c, 146, 122, 46, 34, '#3e3590'); E(c, 140, 116, 40, 26, '#5a4fc0'); E(c, 128, 104, 18, 6, '#7d70e0');
+    c.save();
+    var z = zoom || 1, bob = Math.sin(t / 1400) * 1.5;
+    c.translate(80, 52 + bob); c.scale(z, z); c.translate(-80, -52);
+    station(c, 80, 52, t);
+    c.restore();
+  }
+
+  return { W: W, H: H, render: render, nurse: nurse, renderSpace: renderSpace };
 })();

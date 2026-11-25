@@ -57,8 +57,9 @@ var Engine = (function () {
   }
 
   // 質問する
-  function ask(p, st, input) {
-    var t = norm(input), out = [], ev = { trust: 0, clue: null };
+  function ask(p, st, input, opts) {
+    opts = opts || {};
+    var t = norm(input), out = [], ev = { trust: 0, clue: null, topic: null };
     if (!t || st.phase !== 'talk') return { lines: out, ev: ev };
     st.turns++;
     var before = st.trust;
@@ -89,6 +90,9 @@ var Engine = (function () {
       return b.idx - a.idx;
     });
 
+    // もう聞いた話題で、寄り添う言葉が入っているなら、同じ話をくり返さずお礼を返す
+    if (cands.length && empathic && st.seen[cands[0].tp.id]) cands = [];
+
     if (cands.length) {
       var tp = cands[0].tp;
       st.fallbacks = 0;
@@ -99,6 +103,7 @@ var Engine = (function () {
         var first = !st.seen[tp.id];
         var rep = (!first && tp.again) ? tp.again : tp.reply;
         rep.forEach(function (x) { out.push(L('p', x, tp.face || 'normal')); });
+        ev.topic = tp.id;
         if (first) {
           st.seen[tp.id] = true;
           if (tp.trust) changeTrust(st, tp.trust);
@@ -111,14 +116,15 @@ var Engine = (function () {
     } else {
       st.fallbacks++;
       out.push(L('p', pick(p.fallback, st.cycle++), 'normal'));
-      if (st.fallbacks >= 2) { out.push(hintLine(p, st)); st.fallbacks = 0; }
+      if (st.fallbacks >= 2 && !opts.noHint) { out.push(hintLine(p, st)); st.fallbacks = 0; }
     }
     ev.trust = st.trust - before;
     return { lines: out, ev: ev };
   }
 
   // 真実をつげる
-  function diagnose(p, st, input) {
+  function diagnose(p, st, input, opts) {
+    opts = opts || {};
     var t = norm(input), out = [], ev = { trust: 0 };
     if (!t || st.phase !== 'talk') return { lines: out, ev: ev, ok: false };
     var before = st.trust;
@@ -130,9 +136,9 @@ var Engine = (function () {
     }
     if (countMatch(t, p.truth.groups) > 0) {
       out.push(L('p', pick(p.truth.partial, st.cycle++), 'surprise'));
-      out.push(L('nurse', '（おしい！ だれが・何を・どうしたのか、もう少しくわしく言ってみよう）'));
+      if (!opts.noHint) out.push(L('nurse', '（おしい！ だれが・何を・どうしたのか、もう少しくわしく言ってみよう）'));
     } else {
-      changeTrust(st, -1);
+      if (!opts.noPenalty) changeTrust(st, -1);
       out.push(L('p', pick(p.truth.wrong, st.cycle++), 'angry'));
       if (st.trust <= 0) out = out.concat(leaveLines(p, st));
     }
@@ -141,7 +147,8 @@ var Engine = (function () {
   }
 
   // さいごの声かけ
-  function counsel(p, st, input) {
+  function counsel(p, st, input, opts) {
+    opts = opts || {};
     var t = norm(input), out = [];
     if (!t || st.phase !== 'counsel') return { lines: out, ok: false };
     if (hasAny(t, COMMON_RUDE)) { out.push(L('p', pick(p.rude, st.cycle++), 'angry')); return { lines: out, ok: false }; }
@@ -159,7 +166,7 @@ var Engine = (function () {
       out.push(L('p', pick(p.counsel.neutral, st.cycle++), 'sad'));
     }
     st.counselMiss = (st.counselMiss || 0) + 1;
-    if (st.counselMiss >= 2) {
+    if (st.counselMiss >= 2 && !opts.noHint) {
       out.push(L('nurse', '（この人が本当に望んでいることは何だろう？ 聞き出した手がかりを思い出して）'));
     }
     return { lines: out, ok: false };

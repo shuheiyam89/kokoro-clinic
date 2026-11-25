@@ -21,13 +21,24 @@
       <h1>こころ診療所</h1>
       <p class="title-sub2">～ささやきカルテ～</p>
       <button class="btn big" id="btn-start">はじめる</button>
-      <button class="btn ghost" id="btn-howto">あそびかた</button>
+      <div class="title-links">
+        <button class="btn ghost" id="btn-howto">あそびかた</button>
+        <button class="btn ghost" id="btn-opening">オープニング</button>
+        <button class="btn ghost music-btn">🎵 BGM</button>
+      </div>
     </div>
+  </section>
+
+  <!-- オープニング -->
+  <section id="scr-opening" class="screen">
+    <canvas id="cv-op"></canvas>
+    <button class="skip" id="btn-skip">スキップ ▶▶</button>
+    <div class="op-box" id="op-box"><p id="op-text"></p><span class="op-next">▼</span></div>
   </section>
 
   <!-- 予約リスト -->
   <section id="scr-select" class="screen">
-    <header class="bar"><button class="icon" id="btn-sel-back">←</button><h2>本日の予約</h2><span></span></header>
+    <header class="bar"><button class="icon" id="btn-sel-back">←</button><h2>本日の予約</h2><button class="icon music-btn small">🎵</button></header>
     <p class="sel-lead">あなたはカウンセラー。今日も、悩みをかかえたお客様がやってくる。</p>
     <ul id="patient-list"></ul>
   </section>
@@ -53,10 +64,11 @@
     <div class="tools">
       <button class="tool" id="btn-karte">📋 カルテ<i id="karte-badge"></i></button>
       <button class="tool" id="btn-log">💬 ログ</button>
-      <button class="tool truth" id="btn-truth" disabled>🔍 真実をつげる</button>
+      <button class="tool hint" id="btn-hint" disabled>💡 ヒント</button>
+      <button class="tool music-btn small">🎵</button>
     </div>
     <form class="inputbar" id="form">
-      <input id="inp" type="text" autocomplete="off" enterkeyhint="send" placeholder="質問を入力…" maxlength="80">
+      <input id="inp" type="text" autocomplete="off" enterkeyhint="send" placeholder="（会話を聞いています…）" maxlength="80">
       <button class="btn send" id="btn-send" type="submit">送信</button>
     </form>
   </section>
@@ -66,7 +78,10 @@
 
 </div>
 <script src="js/data-patients.js"></script>
+<script src="js/data-flow.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/story.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/pixel.js"></script>
 <script src="js/ui.js"></script>
 </body>
