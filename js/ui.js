@@ -126,7 +126,11 @@
     opTyping = setInterval(function () { i++; el.textContent = op.text.slice(0, i); if (i >= op.text.length) { clearInterval(opTyping); opTyping = null; } }, 55);
   }
   function endOpening() { clearInterval(opTyping); opTyping = null; opIdx = OPENING.length; show('scr-title'); }
+  var lastOpTap = 0;
   $('scr-opening').addEventListener('click', function () {
+    var now = Date.now();
+    if (now - lastOpTap < 250) return;
+    lastOpTap = now;
     music();
     if (opTyping) { clearInterval(opTyping); opTyping = null; $('op-text').textContent = OPENING[opIdx].text; return; }
     opIdx++; showOp();
@@ -248,15 +252,21 @@
       if (i >= text.length) finishTyping();
     }, 30);
   }
+  // 文を出し終えたら、必ずタップを待つ（💭の入力待ちだけはそのまま入力へ）
   function finishTyping() {
     clearInterval(typing); typing = null; scene.talk = false;
     $('d-text').textContent = curLine.text;
-    if (queue.length) $('dialog').classList.add('more');
+    if (!queue.length && curLine.who === 'think') { nextLine(); return; }
+    if (queue.length || onQueueEnd) $('dialog').classList.add('more');
     else nextLine();
   }
+  var lastTap = 0;
   $('dialog').onclick = function () {
+    var now = Date.now();
+    if (now - lastTap < 250) return; // 1回のタップが2回分に数えられるのを防ぐ
+    lastTap = now;
     if (typing) { finishTyping(); return; }
-    if (queue.length) { $('dialog').classList.remove('more'); nextLine(); }
+    if (busy) { $('dialog').classList.remove('more'); nextLine(); }
   };
 
   $('form').onsubmit = function (e) {
