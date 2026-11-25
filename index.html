@@ -6,9 +6,22 @@
 <meta name="theme-color" content="#2b2340">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>こころ診療所 ～ささやきカルテ～</title>
+<script>
+// 古い版がブラウザに残っていたら、最新版を読み直す
+(function () {
+  var V = '8';
+  fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (v) {
+    v = v.trim();
+    if (v && v !== V && sessionStorage.getItem('kokoro_reload') !== v) {
+      sessionStorage.setItem('kokoro_reload', v);
+      location.replace(location.pathname + '?v=' + v);
+    }
+  }).catch(function () {});
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 <div id="app">
@@ -77,12 +90,12 @@
   <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
 
 </div>
-<script src="js/data-patients.js"></script>
-<script src="js/data-flow.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/story.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/pixel.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/data-patients.js?v=8"></script>
+<script src="js/data-flow.js?v=8"></script>
+<script src="js/engine.js?v=8"></script>
+<script src="js/story.js?v=8"></script>
+<script src="js/audio.js?v=8"></script>
+<script src="js/pixel.js?v=8"></script>
+<script src="js/ui.js?v=8"></script>
 </body>
 </html>
