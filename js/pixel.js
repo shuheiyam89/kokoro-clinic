@@ -178,6 +178,25 @@ var Pixel = (function () {
     c.save(); c.globalAlpha = Math.min(1, (performance.now() - (st.cgT0 || 0)) / 900); c.drawImage(i, 0, 0); c.restore();
   }
 
+  // 予約リスト用の顔の絵。locked なら黒いシルエット。絵がまだ読みこまれていなければ false
+  var PORTRAIT_BG = { slime: ['#d9f5d0', '#b7e6a8'], elf: ['#e6defa', '#cbbcf2'], dragon: ['#2d3270', '#1e2250'] };
+  function portrait(c, sprite, locked) {
+    var ch = CHARS[sprite]; if (!ch) return true;
+    var i = load(ch.name + '_normal'); if (!ready(i)) return false;
+    var side = Math.min(i.width, i.height), size = c.canvas.width;
+    var bg = PORTRAIT_BG[sprite] || ['#eee', '#ddd'];
+    c.fillStyle = locked ? '#4a3d66' : bg[0]; c.fillRect(0, 0, size, size);
+    c.fillStyle = locked ? '#3a2f55' : bg[1];
+    for (var y = 0; y < size; y += 8) for (var x = (y / 8) % 2 ? 4 : 0; x < size; x += 8) c.fillRect(x, y, 4, 4);
+    var tmp = document.createElement('canvas'); tmp.width = side; tmp.height = side;
+    var tc = tmp.getContext('2d');
+    tc.drawImage(i, Math.round((i.width - side) / 2), 0, side, side, 0, 0, side, side);
+    if (locked) { tc.globalCompositeOperation = 'source-atop'; tc.fillStyle = '#1b1530'; tc.fillRect(0, 0, side, side); }
+    c.imageSmoothingEnabled = false;
+    c.drawImage(tmp, 0, 0, side, side, 0, 0, size, size);
+    return true;
+  }
+
   // 看護師ミケの顔（56x56）。mood = normal / happy / worry
   function nurse(c, t, mood) {
     c.clearRect(0, 0, 56, 56);
@@ -217,5 +236,5 @@ var Pixel = (function () {
     if (ph < 0.12) { var sx = 300 - ph * 1800, sy = 16 + ph * 520; for (var q = 0; q < 14; q++) { c.save(); c.globalAlpha = 1 - q / 14; c.fillStyle = '#fff'; c.fillRect(Math.round(sx + q * 2), Math.round(sy - q), 1, 1); c.restore(); } }
   }
 
-  return { W: W, H: H, fx: fx, render: render, nurse: nurse, renderSpace: renderSpace };
+  return { W: W, H: H, fx: fx, portrait: portrait, render: render, nurse: nurse, renderSpace: renderSpace };
 })();

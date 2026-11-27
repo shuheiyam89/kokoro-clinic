@@ -289,15 +289,14 @@
   // ---------- 予約リスト ----------
   $('btn-sel-back').onclick = function () { show('scr-title'); };
   function unlocked(i) { return i === 0 || !!save.cleared[PATIENTS[i - 1].id] || !!save.cleared[PATIENTS[i].id]; }
+  var listRetry = 0;
   function buildList() {
-    var ul = $('patient-list'); ul.innerHTML = '';
+    var ul = $('patient-list'), allReady = true; ul.innerHTML = '';
     PATIENTS.forEach(function (p, i) {
       var li = document.createElement('li'), open = unlocked(i);
       if (!open) li.className = 'locked';
-      var cv = document.createElement('canvas'); cv.width = 80; cv.height = 60;
-      var full = document.createElement('canvas'); full.width = Pixel.W; full.height = Pixel.H;
-      Pixel.render(full.getContext('2d'), { sprite: p.sprite, expr: 'normal', t: 0, scale: 1, night: p.id === 'gald' });
-      var cc = cv.getContext('2d'); cc.imageSmoothingEnabled = false; cc.drawImage(full, 40, 20, 80, 60, 0, 0, 80, 60);
+      var cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+      if (!Pixel.portrait(cv.getContext('2d'), p.sprite, !open)) allReady = false; // 患者ごとの顔（予約前はシルエット）
       li.appendChild(cv);
       var chief = p.karte.filter(function (k) { return k[0] === '主訴'; })[0][1];
       var info = document.createElement('div'); info.className = 'info';
@@ -309,6 +308,8 @@
       if (open) li.onclick = function () { music(); startSession(p); };
       ul.appendChild(li);
     });
+    // 絵の読みこみが間に合わなかったら、少し待って描きなおす
+    if (!allReady && listRetry++ < 20) setTimeout(buildList, 250); else if (allReady) listRetry = 0;
   }
 
   // ---------- 診察 ----------

@@ -31,6 +31,8 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .who b { font-weight: normal; font-size: 18px; color: #ffe0a6; }
 .who small { display: block; font-size: 12px; color: #c9b8f0; }
 .meters { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.mrow { display: flex; align-items: center; gap: 5px; }
+.mrow .lbl { font-size: 11px; color: #c9b8f0; white-space: nowrap; }
 .anger { display: flex; align-items: center; gap: 4px; }
 .anger .ico { font-size: 13px; filter: grayscale(.6); transition: filter .3s; }
 .anger .gauge { position: relative; width: 82px; height: 9px; background: #241a38; border: 2px solid #5d4d7c; border-radius: 3px; overflow: hidden; }
@@ -52,7 +54,9 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 #patient-list { list-style: none; margin: 0; padding: 8px 12px 20px; overflow-y: auto; flex: 1; }
 #patient-list li { display: flex; gap: 12px; align-items: center; background: #fff6e6; color: #3a2a20; border-radius: 12px; padding: 10px; margin-bottom: 12px; position: relative; box-shadow: 0 4px 0 #c9b291; }
 #patient-list li.locked { opacity: .5; filter: grayscale(1); }
-#patient-list li canvas { width: 72px; height: 54px; border-radius: 8px; flex: none; }
+#patient-list li canvas { width: 76px; height: 76px; border-radius: 12px; flex: none; image-rendering: pixelated; }
+#patient-list li.locked { filter: none; }
+#patient-list li.locked .info { opacity: .6; }
 #patient-list .info { flex: 1; font-size: 14px; line-height: 1.45; }
 #patient-list .info b { font-size: 17px; font-weight: normal; }
 #patient-list .info .stars { color: #e08a2e; }
