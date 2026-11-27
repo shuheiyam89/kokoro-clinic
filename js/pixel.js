@@ -4,7 +4,8 @@ var Pixel = (function () {
   var V = (document.currentScript && (document.currentScript.src.match(/\?v=\w+/) || [''])[0]) || '';
   var FACES = ['normal', 'happy', 'sad', 'surprise', 'angry', 'cry'];
   // sprite名 → 画像の名前・座ったときの下端(y)
-  var CHARS = { slime: { name: 'pururu', bottom: 184 }, elf: { name: 'lumie', bottom: 170, front: true }, dragon: { name: 'gald', bottom: 188 } };
+  var CHARS = { slime: { name: 'pururu', bottom: 184 }, elf: { name: 'lumie', bottom: 170, front: true }, dragon: { name: 'gald', bottom: 188 },
+    fox: { name: 'konoha', bottom: 186 }, cat: { name: 'mii', bottom: 184 }, robot: { name: 'noa', bottom: 186 } };
   var img = {};
   function load(key) {
     if (img[key]) return img[key];
@@ -19,10 +20,11 @@ var Pixel = (function () {
   });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
   // 物語に出てくる人たち（となりに登場）と、エピソードの品物、結末の1枚絵
-  var COMP = { moti: { x: 208, bottom: 184, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 232, bottom: 216, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 226, bottom: 214, faces: ['happy', 'surprise', 'sad'] } };
+  var COMP = { moti: { x: 208, bottom: 184, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 232, bottom: 216, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 226, bottom: 214, faces: ['happy', 'surprise', 'sad'] },
+    mother: { x: 232, bottom: 214, faces: ['smile'] }, pipi: { x: 228, bottom: 214, faces: ['smile'] }, harumo: { x: 232, bottom: 214, faces: ['smile'], alpha: 0.85 } };
   Object.keys(COMP).forEach(function (k) { COMP[k].faces.forEach(function (f) { load(k + '_' + f); }); });
-  ['bread', 'comm', 'flower', 'drawing'].forEach(function (k) { load('item_' + k); });
-  ['end_pururu', 'end_lumie', 'end_gald'].forEach(load);
+  ['bread', 'comm', 'flower', 'drawing', 'photo', 'inari', 'misanga', 'letter', 'spanner', 'musicbox'].forEach(function (k) { load('item_' + k); });
+  ['end_pururu', 'end_lumie', 'end_gald', 'end_konoha', 'end_mii', 'end_noa'].forEach(load);
 
   function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, Math.round(x), Math.round(y)); return i; }
 
@@ -155,7 +157,7 @@ var Pixel = (function () {
     if (!ready(i)) return;
     var t = st.t || 0, bob = st.companion.talk ? ((t / 140) | 0) % 2 : (((t / 1300) | 0) % 2);
     var a = Math.min(1, (performance.now() - (st.companion.t0 || 0)) / 400);
-    c.save(); c.globalAlpha = a; c.drawImage(i, Math.round(cp.x - i.width / 2), Math.round(cp.bottom - i.height + bob)); c.restore();
+    c.save(); c.globalAlpha = a * (cp.alpha || 1); c.drawImage(i, Math.round(cp.x - i.width / 2), Math.round(cp.bottom - i.height + bob)); c.restore();
   }
   // エピソードの品物を大きく見せる
   function drawItem(c, st) {
@@ -179,7 +181,8 @@ var Pixel = (function () {
   }
 
   // 予約リスト用の顔の絵。locked なら黒いシルエット。絵がまだ読みこまれていなければ false
-  var PORTRAIT_BG = { slime: ['#d9f5d0', '#b7e6a8'], elf: ['#e6defa', '#cbbcf2'], dragon: ['#2d3270', '#1e2250'] };
+  var PORTRAIT_BG = { slime: ['#d9f5d0', '#b7e6a8'], elf: ['#e6defa', '#cbbcf2'], dragon: ['#2d3270', '#1e2250'],
+    fox: ['#ffe3c2', '#ffcf99'], cat: ['#dff0ff', '#c2e0fb'], robot: ['#232a4f', '#171c3a'] };
   function portrait(c, sprite, locked) {
     var ch = CHARS[sprite]; if (!ch) return true;
     var i = load(ch.name + '_normal'); if (!ready(i)) return false;

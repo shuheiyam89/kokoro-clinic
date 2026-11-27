@@ -190,7 +190,16 @@ if have('rino'):
     sheet('rino', 3, 1, 74, 'rino', ['happy', 'surprise', 'sad'])
 if have('items'):
     sheet('items', 4, 1, 64, 'item', ['bread', 'comm', 'flower', 'drawing'])
-for n in ['end_pururu', 'end_lumie', 'end_gald']:
+for n, h in [('konoha', 120), ('mii', 104), ('noa', 116)]:
+    if have(n):
+        sheet(n, 3, 2, h, n, FACES)
+if have('cast2'):
+    sheet('cast2', 3, 1, 118, 'cast2', ['mother_smile', 'pipi_smile', 'harumo_smile'])
+    for a, b in [('mother', 'mother'), ('pipi', 'pipi'), ('harumo', 'harumo')]:
+        os.replace(os.path.join(OUT, 'cast2_%s_smile.png' % a), os.path.join(OUT, '%s_smile.png' % b))
+if have('items2'):
+    sheet('items2', 3, 2, 64, 'item', ['photo', 'inari', 'misanga', 'letter', 'spanner', 'musicbox'])
+for n in ['end_pururu', 'end_lumie', 'end_gald', 'end_konoha', 'end_mii', 'end_noa']:
     if have(n):
         load(n).convert('RGB').resize((W, H), Image.BOX).save(os.path.join(OUT, n + '.png'))
 print('extra done')

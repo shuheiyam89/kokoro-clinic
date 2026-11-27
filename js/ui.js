@@ -158,7 +158,7 @@
     var x = c.getContext('2d'), sc2 = document.createElement('canvas'); sc2.width = Pixel.W; sc2.height = Pixel.H;
     var s2 = sc2.getContext('2d'); s2.imageSmoothingEnabled = false;
     var cg = sc.route.key === 'best' ? 'end_' + p.id : null;
-    Pixel.render(s2, { sprite: p.sprite, expr: 'happy', t: 0, alpha: 1, night: p.id === 'gald', cg: cg, cgT0: -1e9 });
+    Pixel.render(s2, { sprite: p.sprite, expr: 'happy', t: 0, alpha: 1, night: (p.night || p.id === 'gald'), cg: cg, cgT0: -1e9 });
     x.imageSmoothingEnabled = false;
     x.drawImage(sc2, 0, 30, 320, 168, 0, 0, W, 630);
     var gr = x.createLinearGradient(0, 330, 0, H);
@@ -322,7 +322,7 @@
     P = p; G = Story.start(p); ST = G.st; log = []; newClues = 0; waiting = null;
     lastTrust = ST.trust; lastAnger = 0; knownClues = 0; lastFace = 'normal'; reactNext = false;
     scene.sprite = p.sprite; scene.expr = 'normal'; scene.alpha = 0; scene.fade = 0.03;
-    scene.flower = false; scene.night = p.id === 'gald'; scene.companion = null; scene.item = null; scene.cg = null;
+    scene.flower = false; scene.night = (p.night || p.id === 'gald'); scene.companion = null; scene.item = null; scene.cg = null;
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
     show('scr-session');

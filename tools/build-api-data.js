@@ -2,7 +2,7 @@
 var fs = require('fs'), vm = require('vm'), path = require('path');
 var root = path.join(__dirname, '..'), ctx = {};
 vm.createContext(ctx);
-['data-patients.js', 'data-flow.js'].forEach(function (f) { vm.runInContext(fs.readFileSync(path.join(root, 'js', f), 'utf8'), ctx); });
+['data-patients.js', 'data-flow.js', 'data-stage2.js'].forEach(function (f) { vm.runInContext(fs.readFileSync(path.join(root, 'js', f), 'utf8'), ctx); });
 var P = vm.runInContext('PATIENTS', ctx);
 var out = {};
 P.forEach(function (p) {

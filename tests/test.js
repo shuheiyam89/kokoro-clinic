@@ -2,7 +2,7 @@
 var fs = require('fs'), vm = require('vm'), path = require('path');
 var ctx = { console: console };
 vm.createContext(ctx);
-['data-patients.js', 'data-flow.js', 'engine.js', 'story.js'].forEach(function (f) {
+['data-patients.js', 'data-flow.js', 'data-stage2.js', 'engine.js', 'story.js'].forEach(function (f) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'), ctx, { filename: f });
 });
 var P = vm.runInContext('PATIENTS', ctx), E = vm.runInContext('Engine', ctx), S = vm.runInContext('Story', ctx);
@@ -82,7 +82,10 @@ P.forEach(function (p) {
 // 寄り道の質問でエピソードが起き、結末が「best」に変わるか
 var EPQ = { pururu: ['お仕事は何をしているの？', '通信機が鳴ってるみたいだけど？'],
   lumie: ['里に言い伝えはありますか？', 'その手帳の青い押し花はなんですか？'],
-  gald: ['懐の紙はなんですか？', '奥さんはどんな方でしたか？'] };
+  gald: ['懐の紙はなんですか？', '奥さんはどんな方でしたか？'],
+  konoha: ['通信機の待ち受けの写真、すてきですね', '食堂の大将ってどんな人？'],
+  mii: ['その手首のミサンガ、かわいいね', 'リュックの封筒はなあに？'],
+  noa: ['そのスパナ、大事なものなんですか？', '博士の机のオルゴールは？'] };
 P.forEach(function (p) {
   var g = S.start(p), r = S.run(g), left = EPQ[p.id].slice(), shown = 0, steps = 0, missed = false;
   while (r.waiting && steps++ < 200) {
@@ -102,7 +105,7 @@ P.forEach(function (p) {
   console.log((ok ? 'OK  ' : 'NG  ') + 'エピソード ' + p.name + ' 発見' + shown + ' ルート=' + rt.key + '「' + rt.name + '」 残り:' + left.join(','));
   if (!ok) fails++;
   // 寄り道しなければ normal
-  var g2 = S.start(p), r2 = S.run(g2); while (r2.waiting) { S.answer(g2, r2.waiting.example); r2 = S.run(g2); }
+  var g2 = S.start(p), r2 = S.run(g2), k2 = 0; while (r2.waiting && k2++ < 100) { S.answer(g2, r2.waiting.example); r2 = S.run(g2); }
   if (E.route(p, g2.st).key !== 'normal') { console.log('NG  寄り道なしで normal にならない ' + p.name); fails++; }
 });
 console.log(fails ? fails + '件失敗' : 'すべて成功');

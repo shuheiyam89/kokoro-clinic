@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = { console };
 vm.createContext(ctx);
-for (const f of ['data-patients.js', 'data-flow.js', 'engine.js', 'story.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', f), 'utf8'), ctx);
+for (const f of ['data-patients.js', 'data-flow.js', 'data-stage2.js', 'engine.js', 'story.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', f), 'utf8'), ctx);
 const PATIENTS = vm.runInContext('PATIENTS', ctx), Story = vm.runInContext('Story', ctx);
 const API = process.env.API || 'https://kokoro-clinic-api.netlify.app/api/talk';
 
@@ -19,7 +19,12 @@ const PLAYER = {
   lumie: [['歌が聞こえないって、どういうこと？'], ['いつ頃からそうなったんですか？'], ['商業区にはよく行くんですか？'], ['その花屋さんって、どんな人がいるの？'],
     ['トマスさんのこと、好きなんですね'], ['一緒にいられる時間を大事にしてほしいです']],
   gald: [['昔はどんなお仕事を？'], ['夜中に起きるとき、夢を見たりしますか？'], ['のどの具合はどうですか？'], ['火って今でも吹けるんですか？'], ['お祭りで何か約束したんですか？'],
-    ['火が出なくなってしまったんですね'], ['リノくんに本当のことを話してみませんか']]
+    ['火が出なくなってしまったんですね'], ['リノくんに本当のことを話してみませんか']],
+  konoha: [['しっぽ、どうしたんですか？'], ['いつから抜けはじめたの？'], ['ご家族が来るんですか？'], ['夜は何のお仕事を？'], ['家族には仕事のこと何て言ってるの？'],
+    ['家族にシェフだってうそをついてるんですね'], ['正直に話して、食堂に招待してみたら？']],
+  mii: [['どこか痛いの？'], ['いつから？'], ['ピピってだれ？'], ['ピピと何かあったの？'], ['ピピとけんかしちゃったんだね'], ['ピピにごめんねって言ってみようよ']],
+  noa: [['何か困っていることがあるんですか？'], ['それはいつからですか？'], ['博士って、どんな人？'], ['博士は今どこにいるんですか？'], ['博士は本当に旅に出ているの？'],
+    ['博士に会えなくて、さみしいんですね'], ['さみしいと感じていいんですよ。歌っていいんです']]
 };
 
 // 「散らかった」遊び方：順番どおりに聞かない・関係ない質問・先回りの質問
@@ -44,7 +49,7 @@ async function play(p) {
   const g = Story.start(p), log = [];
   const show = (lines) => lines.forEach(l => { log.push(l); console.log(`${l.who === 'p' ? p.name : l.who === 'c' ? l.name : names[l.who] || l.who}：${l.text}`); });
   const hist = () => log.filter(l => l.who === 'me' || l.who === 'p').slice(-24).map(l => ({ who: l.who, text: l.text }));
-  const qs = PLAYER[p.id].map(a => a.slice());
+  const qs = (PLAYER[p.id] || []).map(a => a.slice());
   let qi = 0, guard = 0;
   console.log(`\n======== ${p.name} ========`);
   while (guard++ < 60) {
