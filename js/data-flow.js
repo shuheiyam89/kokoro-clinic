@@ -69,7 +69,11 @@ var FLOWS = {
   gald: [
     { type: 'auto', lines: [
       { who: 'narr', text: 'ずしん、と床が鳴った。大きな影がソファに腰をおろす。' },
-      { who: 'p', face: 'angry', text: 'ガルドだ。…眠れん。それだけだ。さっさと薬を出してくれ。' }
+      { who: 'p', face: 'angry', text: 'ガルドだ。…眠れん。それだけだ。さっさと薬を出してくれ。' },
+      { who: 'narr', text: 'ドアのかげから、小さな竜の子がひょこっと顔を出した。', show: { key: 'rino', face: 'happy' } },
+      { who: 'c', name: 'リノ', cface: 'happy', text: 'おじいちゃん、がんばってね！ ぼく、待合室で待ってるから！' },
+      { who: 'p', face: 'normal', text: '…ふん。孫のリノだ。ほれ、行っておれ。' },
+      { who: 'narr', text: 'リノは、ぱたぱたと待合室へ走っていった。', show: null }
     ] },
     { type: 'say', text: 'ガルドさん、眠れないのはおつらいですね。くわしく教えてください。' },
     { type: 'ask', expect: ['past'], prompt: '気難しい人だ…。カルテの職業欄を見て、本人の誇りについて聞いてみよう。',

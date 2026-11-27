@@ -10,7 +10,7 @@ var Story = (function () {
     g.p.topics.forEach(function (tp) {
       if (!tp.episode || !g.st.seen[tp.id] || g.epDone[tp.id]) return;
       g.epDone[tp.id] = true;
-      out.push({ who: 'narr', text: '✦ エピソード「' + tp.episode.title + '」', episode: tp.episode.title });
+      out.push({ who: 'narr', text: '✦ エピソード「' + tp.episode.title + '」', episode: tp.episode.title, item: tp.episode.item });
       out = out.concat(tp.episode.scene);
     });
     return out;

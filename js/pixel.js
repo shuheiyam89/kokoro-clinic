@@ -18,6 +18,11 @@ var Pixel = (function () {
     FACES.forEach(function (f) { load(CHARS[k].name + '_' + f); if (BLINK[f]) load(CHARS[k].name + '_' + f + '_blink'); });
   });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
+  // 物語に出てくる人たち（となりに登場）と、エピソードの品物、結末の1枚絵
+  var COMP = { moti: { x: 208, bottom: 184, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 232, bottom: 216, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 226, bottom: 214, faces: ['happy', 'surprise', 'sad'] } };
+  Object.keys(COMP).forEach(function (k) { COMP[k].faces.forEach(function (f) { load(k + '_' + f); }); });
+  ['bread', 'comm', 'flower', 'drawing'].forEach(function (k) { load('item_' + k); });
+  ['end_pururu', 'end_lumie', 'end_gald'].forEach(load);
 
   function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, Math.round(x), Math.round(y)); return i; }
 
@@ -116,6 +121,7 @@ var Pixel = (function () {
     c.fillStyle = '#e9e4fb'; c.fillRect(0, 0, W, H);
     draw(c, night ? 'room_night' : 'room', 0, 0);
     var ch = st.sprite && CHARS[st.sprite];
+    if (!ch && st.companion) drawCompanion(c, st);
     if (ch && st.visible !== false) {
       var face = FACES.indexOf(st.expr) >= 0 ? st.expr : 'normal';
       var i = load(ch.name + '_' + face);
@@ -129,13 +135,47 @@ var Pixel = (function () {
         var top = ch.bottom - i.height + bob;
         c.save();
         c.globalAlpha = st.alpha != null ? st.alpha : 1;
-        c.drawImage(i, Math.round(160 - i.width / 2) + (st.fx ? shakeX(performance.now()) : 0), Math.round(top));
+        var cx = st.companion ? 128 : 160; // となりに誰かいるときは、少し左へ
+        c.drawImage(i, Math.round(cx - i.width / 2) + (st.fx ? shakeX(performance.now()) : 0), Math.round(top));
         c.restore();
         if (ch.front) draw(c, night ? 'room_night_front' : 'room_front', 0, 0);
         smoke(c, st, top, i.height);
-        if (st.fx) drawFx(c, 160, top, i.width);
+        if (st.companion) drawCompanion(c, st);
+        if (st.fx) drawFx(c, cx, top, i.width);
       }
     }
+    if (st.item) drawItem(c, st);
+    if (st.cg) drawCg(c, st);
+  }
+
+  function drawCompanion(c, st) {
+    var cp = COMP[st.companion.key]; if (!cp) return;
+    var i = load(st.companion.key + '_' + (st.companion.face || cp.faces[0]));
+    if (!ready(i)) i = load(st.companion.key + '_' + cp.faces[0]);
+    if (!ready(i)) return;
+    var t = st.t || 0, bob = st.companion.talk ? ((t / 140) | 0) % 2 : (((t / 1300) | 0) % 2);
+    var a = Math.min(1, (performance.now() - (st.companion.t0 || 0)) / 400);
+    c.save(); c.globalAlpha = a; c.drawImage(i, Math.round(cp.x - i.width / 2), Math.round(cp.bottom - i.height + bob)); c.restore();
+  }
+  // エピソードの品物を大きく見せる
+  function drawItem(c, st) {
+    var i = load('item_' + st.item); if (!ready(i)) return;
+    var e = performance.now() - (st.itemT0 || 0), a = Math.min(1, e / 300), k = 2;
+    c.save(); c.globalAlpha = 0.45 * a; c.fillStyle = '#1a1640'; c.fillRect(0, 0, W, H);
+    c.globalAlpha = a;
+    var w = i.width * k, h = i.height * k, x = 160 - w / 2, y = 108 - h / 2 + Math.sin(e / 500) * 2 - (1 - a) * 10;
+    c.imageSmoothingEnabled = false; c.drawImage(i, Math.round(x), Math.round(y), w, h);
+    for (var n = 0; n < 4; n++) {
+      var ph = (e / 900 + n / 4) % 1, ang = n * 1.7;
+      c.globalAlpha = a * (1 - Math.abs(ph - 0.5) * 2);
+      star(c, 160 + Math.cos(ang) * (w * 0.6), 108 + Math.sin(ang) * (h * 0.55), 2 + ph * 2, n % 2 ? '#ffe36a' : '#ffffff');
+    }
+    c.restore();
+  }
+  // 結末の1枚絵（ふわっと出す）
+  function drawCg(c, st) {
+    var i = load(st.cg); if (!ready(i)) return;
+    c.save(); c.globalAlpha = Math.min(1, (performance.now() - (st.cgT0 || 0)) / 900); c.drawImage(i, 0, 0); c.restore();
   }
 
   // 看護師ミケの顔（56x56）。mood = normal / happy / worry

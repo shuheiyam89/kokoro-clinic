@@ -176,3 +176,21 @@ for n in EYES:
     for f in ['normal', 'sad', 'surprise']:  # 怒り顔は眉が目にかかるので、まばたきなし
         blink_frame(n, f)
 print('blink frames done')
+
+# ---- 追加キャラ・品物・結末の絵 ----
+def have(n):
+    return os.path.exists(os.path.join(SRC, n + '.png'))
+
+
+if have('moti'):
+    sheet('moti', 3, 1, 84, 'moti', ['pout', 'happy', 'weak'])
+if have('thomas'):
+    sheet('thomas', 3, 1, 122, 'thomas', ['smile', 'shy', 'surprise'])
+if have('rino'):
+    sheet('rino', 3, 1, 74, 'rino', ['happy', 'surprise', 'sad'])
+if have('items'):
+    sheet('items', 4, 1, 64, 'item', ['bread', 'comm', 'flower', 'drawing'])
+for n in ['end_pururu', 'end_lumie', 'end_gald']:
+    if have(n):
+        load(n).convert('RGB').resize((W, H), Image.BOX).save(os.path.join(OUT, n + '.png'))
+print('extra done')

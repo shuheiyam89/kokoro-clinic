@@ -189,7 +189,7 @@
     P = p; G = Story.start(p); ST = G.st; log = []; newClues = 0; waiting = null;
     lastTrust = ST.trust; lastAnger = 0; knownClues = 0; lastFace = 'normal'; reactNext = false;
     scene.sprite = p.sprite; scene.expr = 'normal'; scene.alpha = 0; scene.fade = 0.03;
-    scene.flower = false; scene.night = p.id === 'gald';
+    scene.flower = false; scene.night = p.id === 'gald'; scene.companion = null; scene.item = null; scene.cg = null;
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
     show('scr-session');
@@ -303,14 +303,25 @@
   function nextLine() {
     var dlg = $('dialog');
     if (!queue.length) {
-      busy = false; dlg.classList.remove('more'); scene.talk = false;
+      busy = false; dlg.classList.remove('more'); scene.talk = false; scene.item = null;
+      if (scene.companion) scene.companion.talk = false;
       var f = onQueueEnd; onQueueEnd = null; if (f) f();
       return;
     }
     curLine = queue.shift();
     var who = curLine.who, st = Story.current(G), wt = st ? st.type : null;
     dlg.className = 'dialog ' + who;
-    $('d-name').textContent = who === 'p' ? P.name : who === 'nurse' ? '看護師ミケ' : who === 'me' ? 'あなた'
+    // 物語の演出：となりに登場する人・品物・結末の絵
+    if (curLine.show !== undefined) {
+      scene.companion = curLine.show ? { key: curLine.show.key, face: curLine.show.face, t0: performance.now() } : null;
+      scene.cg = null;
+    }
+    if (curLine.item) { scene.item = curLine.item; scene.itemT0 = performance.now(); }
+    if (curLine.cg) { scene.cg = curLine.cg; scene.cgT0 = performance.now(); }
+    if (scene.companion) scene.companion.talk = who === 'c';
+    if (who === 'c' && curLine.cface && scene.companion) scene.companion.face = curLine.cface;
+    if (who === 'c') dlg.className = 'dialog p';
+    $('d-name').textContent = who === 'c' ? (curLine.name || '') : who === 'p' ? P.name : who === 'nurse' ? '看護師ミケ' : who === 'me' ? 'あなた'
       : who === 'think' ? (wt === 'truth' ? '💭 真実は…？' : wt === 'counsel' ? '💭 どう声をかける？' : '💭 なにを聞こう？') : '';
     if (who === 'p') {
       var face = curLine.face || scene.expr;
@@ -321,7 +332,7 @@
     }
     if ((who === 'p' || who === 'narr') && curLine.text.indexOf('【') >= 0) pikiin();
     if (who === 'nurse') nurseMood = moodOf(curLine.text);
-    log.push({ who: who, text: curLine.text });
+    log.push({ who: who, text: curLine.text, name: curLine.name });
     if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
     var text = curLine.text, plain = text.replace(/[【】]/g, ''), i = 0, el = $('d-text');
     el.textContent = '';
@@ -414,7 +425,7 @@
   };
   $('btn-log').onclick = function () {
     var h = log.filter(function (l) { return l.who !== 'think'; }).map(function (l) {
-      var name = l.who === 'me' ? 'あなた' : l.who === 'p' ? P.name : l.who === 'nurse' ? 'ミケ' : '';
+      var name = l.who === 'me' ? 'あなた' : l.who === 'p' ? P.name : l.who === 'nurse' ? 'ミケ' : l.who === 'c' ? (l.name || '') : '';
       return '<p class="' + l.who + '">' + (name ? '<b>' + esc(name) + '</b>：' : '') + rich(l.text) + '</p>';
     }).join('');
     openModal('<h3>💬 会話ログ</h3><div class="log">' + (h || '<p>まだ会話はありません</p>') + '</div>');

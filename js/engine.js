@@ -166,6 +166,7 @@ var Engine = (function () {
     var out = p.ending.slice();
     foundEpisodes(p, st).forEach(function (t) { out = out.concat(t.episode.ending || []); });
     if (route(p, st).key === 'best' && p.trueEnding) out = out.concat(p.trueEnding);
+    if (p.epilogue) out = out.concat(p.epilogue);
     return out;
   }
 
