@@ -106,7 +106,7 @@ var Engine = (function () {
       st.fallbacks = 0;
       if (tp.minTrust && st.trust < tp.minTrust) {
         out.push(L('p', pick(p.locked, st.cycle++), 'sad'));
-        out.push(L('nurse', '（まだ話してくれないみたい。もっと寄り添ってみよう）'));
+        if (!opts.quiet) out.push(L('nurse', '（まだ話してくれないみたい。もっと寄り添ってみよう）'));
       } else {
         var first = !st.seen[tp.id];
         var rep = (!first && tp.again) ? tp.again : tp.reply;

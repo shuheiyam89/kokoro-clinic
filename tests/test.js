@@ -51,8 +51,19 @@ function flowPlay(p, mode) {
   var r = S.run(g);
   while (r.waiting && steps < 200) {
     steps++;
-    var a;
+    var a = null;
     if (mode === 'example') a = S.answer(g, r.waiting.example);
+    else if (p.difficulty > 1) {
+      // リュミエ以降：外しても自動のヒントは出ない。💡を2回押すと言い方の例が出るので、それで進める
+      var ls = [];
+      ['ほげほげ', 'ふがふが', 'もにゃもにゃ'].forEach(function (x) { if (!a || !a.ok) { a = S.answer(g, x); ls = ls.concat(a.lines); } });
+      if (!a.ok) {
+        var leak = ls.filter(function (l) { return l.who === 'nurse' && l.text.indexOf('💡') < 0; });
+        if (leak.length) { console.log('NG  自動ヒントが出た ' + p.name + '：' + leak[0].text); fails++; }
+        S.hint(g); var h2 = S.hint(g), ex = (h2[0].text.match(/「(.+)」/) || [])[1];
+        a = S.answer(g, ex || r.waiting.example); if (a.ok) assisted++;
+      }
+    }
     else { a = S.answer(g, 'ほげほげ'); if (!a.ok) a = S.answer(g, 'ふがふが'); if (!a.ok) a = S.answer(g, 'もにゃもにゃ'); }
     if (a.assisted) assisted++;
     if (!a.ok) break;
