@@ -6,6 +6,26 @@
 
 ---
 
+## 0. 進み具合（2026-11-27 更新）
+
+決定：パッケージ名 `com.hatoru.kokoroclinic`／課金は RevenueCat／個人アカウント（ハトル）／AI の回数制限は今のまま。
+
+- 済：AI サーバー（Netlify `kokoro-clinic-api`）の許可先に `https://localhost`（Android アプリ）を追加して再公開。アプリからの通信が通ることを確認
+- 済：プライバシーポリシー `privacy.html`（公開URL：https://shuheiyam89.github.io/kokoro-clinic/privacy.html）
+- 済：Capacitor 8 のプロジェクト（非公開リポジトリ shuheiyam89/kokoro-clinic-play）。RevenueCat プラグイン入り
+- 済：RevenueCat の橋渡し `js/store-revenuecat.js`（Play 版だけ読み込む）。キーは `kokoro-clinic-play/play.config.json` の `revenuecatKey` を差し替える（今は REPLACE_ME＝モック）
+- 済：アップロード鍵（`C:/Users/81802/Documents/kokoro-clinic-signing/`）と、署名付き AAB の試作（版 1.0・versionCode 1）
+- 未：RevenueCat のアカウント・設定、Play Console でのアプリ作成（本人確認の完了待ち）
+
+### Play 版のビルド手順（このPC）
+1. ゲーム側：`node tools/build-play.js`（www を作る。play.config.json のキーを入れる）
+2. `cd ../kokoro-clinic-play` → `npx -y -p node@22 node node_modules/@capacitor/cli/bin/capacitor sync android`（Capacitor 8 は Node 22 以上が必要）
+3. `cd android` → JAVA_HOME を Android Studio の jbr にして `gradlew.bat bundleRelease`
+4. 出来上がり：`android/app/build/outputs/bundle/release/app-release.aab`（アップロード鍵で署名済み）
+- 更新のたびに `android/app/build.gradle` の versionCode を1つ上げる
+
+---
+
 ## 1. このリポジトリで済んでいること
 
 - 課金ゲート：`js/paywall.js`（ui.js から使う）

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー｜こころ診療所 ～ささやきカルテ～</title>
+<meta name="robots" content="index,follow">
+<style>
+  :root { --ink: #2b2240; --sub: #6b6280; --line: #e4dff0; --accent: #c94f7c; --bg: #faf8fd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, "Hiragino Sans", "Yu Gothic UI", sans-serif; line-height: 1.8; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 18px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 30px 0 8px; padding-left: 10px; border-left: 5px solid var(--accent); }
+  p, li { font-size: 15px; }
+  ul { padding-left: 1.3em; }
+  .meta { color: var(--sub); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; }
+  th, td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+  th { background: #f3eff9; width: 30%; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>プライバシーポリシー</h1>
+  <p class="meta">こころ診療所 ～ささやきカルテ～（以下「本ゲーム」）／運営：ハトル（個人開発）<br>制定日：2026年11月27日</p>
+
+  <p>本ゲームは、宇宙ステーションの診療所で、患者さんの悩みを会話で聞き出すゲームです。遊ぶときに扱う情報と、その使い方を説明します。本ゲームに<b>広告はありません</b>。また、<b>アクセス解析（行動の追跡）も入れていません</b>。</p>
+
+  <h2>1. 会話の文章（AIへの送信）</h2>
+  <p>あなたが入力した言葉に合わせて患者さんの返事を作るため、診察中の会話の文章を、本ゲームの中継サーバー（Netlify）を通して、Anthropic社のAI（Claude）に送ります。</p>
+  <ul>
+    <li>送るのは、その診察の直近の会話と、ゲームの進み具合（信頼度・怒りなど）だけです。</li>
+    <li>中継サーバーは、会話の文章を保存しません。</li>
+    <li>Anthropic社のAPIに送った内容は、同社の規約にもとづいて扱われ、AIの学習には使われません（不正利用の防止などのため、同社が一定期間保管する場合があります）。</li>
+    <li><b>名前・住所・電話番号など、個人を特定できる情報は入力しないでください。</b></li>
+    <li>AIが使えないときは、ゲーム内のキーワード判定に自動で切り替わり、送信は行いません。</li>
+  </ul>
+
+  <h2>2. 利用回数の制限のための情報</h2>
+  <p>AIの使いすぎを防ぐため、1日の利用回数を数えています。そのために、通信元のIPアドレスを、その日の回数の記録のキーとして中継サーバー（Netlify）に一時的に保存します。回数を数える以外の目的には使いません。</p>
+
+  <h2>3. 感想・お問い合わせ</h2>
+  <p>ゲーム内の「📝 感想を送る」を使った場合に限り、次の内容を受け取り、ゲームの改善のために使います。</p>
+  <table>
+    <tr><th>送られる内容</th><td>星の評価、感想の文章、送った画面・患者・結果、ゲームの版番号、端末の種類（ブラウザ／アプリの情報）</td></tr>
+    <tr><th>保存先</th><td>中継サーバー（Netlify）のデータ保存領域</td></tr>
+    <tr><th>連続送信の制限</th><td>1日の送信回数を数えるため、IPアドレスをその日の回数の記録のキーとして使います</td></tr>
+  </table>
+  <p>メールでのお問い合わせ（kokoroclinic.game@gmail.com）は、返信のためだけに使います。</p>
+
+  <h2>4. 端末に保存する情報</h2>
+  <p>遊んだ記録（クリアした患者、星の数、自己ベスト）、音楽のオン／オフ、購入済みかどうかを、あなたの端末の中（ブラウザの保存領域）に保存します。この情報は運営者に送られません。アプリを削除すると消えます（購入は「購入を復元」で戻せます）。</p>
+
+  <h2>5. アプリ内購入（Android アプリ版）</h2>
+  <p>Android アプリ版では、患者3人目以降を開放するアイテム（600円・買い切り）を Google Play で販売します。</p>
+  <ul>
+    <li>支払いの手続きは Google Play が行います。運営者が、あなたのカード番号などの支払い情報を受け取ることはありません。</li>
+    <li>購入状態の確認と復元のため、購入管理サービス RevenueCat（RevenueCat, Inc.）を使います。RevenueCat には、アプリごとに作られる匿名のID、購入した商品と日時、端末とアプリの基本情報が送られます。</li>
+    <li>月額料金（サブスクリプション）や、追加の支払いはありません。</li>
+  </ul>
+
+  <h2>6. 第三者への提供</h2>
+  <p>上に書いた委託先（Netlify、Anthropic、Google、RevenueCat）を除き、法令にもとづく場合を除いて、受け取った情報を第三者に提供しません。</p>
+
+  <h2>7. 子どもの利用</h2>
+  <p>本ゲームは特定の年齢層を対象にしたものではありません。お子さまが遊ぶときは、保護者の方がこのポリシーを確認してください。会話に個人情報を入力しないよう、お声がけをお願いします。</p>
+
+  <h2>8. 変更</h2>
+  <p>内容を変えるときは、このページを更新し、制定日の下に更新日を書きます。</p>
+
+  <h2>9. お問い合わせ</h2>
+  <p>ハトル（こころ診療所 運営）<br>メール：<a href="mailto:kokoroclinic.game@gmail.com">kokoroclinic.game@gmail.com</a></p>
+
+  <p class="meta"><a href="./">← ゲームにもどる</a></p>
+</main>
+</body>
+</html>
