@@ -206,3 +206,5 @@ em.key { font-style: normal; color: #d8322a; font-weight: bold; }
 .share { text-align: center; } .share img { width: 100%; border-radius: 8px; }
 .share-note { font-size: 12px; color: #9a8a7a; margin: 4px 0 8px; }
 .share .btn { display: block; margin: 6px auto; width: 80%; text-decoration: none; box-sizing: border-box; }
+.fb-mail { text-align: center; font-size: 13px; color: #7a6a5a; margin: 10px 0 2px; line-height: 1.6; }
+.fb-mail a, #modal-body a[href^="mailto"] { color: #c94f7c; word-break: break-all; }

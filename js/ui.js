@@ -200,6 +200,10 @@
 
   // ---------- テストプレイの感想 ----------
   var FB_URL = 'https://kokoro-clinic-api.netlify.app/api/feedback';
+  var FB_MAIL = 'kokoroclinic.game@gmail.com'; // 感想・お問い合わせのメールアドレス
+  function mailLink() {
+    return '<a href="mailto:' + FB_MAIL + '?subject=' + encodeURIComponent('こころ診療所の感想') + '">' + FB_MAIL + '</a>';
+  }
   function fbButton() { return '<p class="fb-row"><button class="btn ghost fb-open">📝 感想を送る</button></p>'; }
   function hookFeedback(ctx) {
     var b = document.querySelector('#modal-body .fb-open');
@@ -211,7 +215,8 @@
     openModal('<div class="fb"><h3>📝 感想を送る</h3><p class="fb-lead">テストプレイありがとうございます！ 気づいたことを、なんでも教えてください。</p>' +
       '<div class="fb-stars">' + [1, 2, 3, 4, 5].map(function (n) { return '<button data-n="' + n + '">☆</button>'; }).join('') + '</div>' +
       '<textarea id="fb-text" maxlength="1000" rows="5" placeholder="よかったところ、わかりにくかったところ、こまったところ、ふしぎな返事をされた場面…"></textarea>' +
-      '<button class="btn" id="fb-send">送る</button><p class="fb-note">送られるのは、この感想・評価・遊んでいた場面・端末の種類だけです。</p><p id="fb-msg"></p></div>',
+      '<button class="btn" id="fb-send">送る</button><p class="fb-note">送られるのは、この感想・評価・遊んでいた場面・端末の種類だけです。</p><p id="fb-msg"></p>' +
+      '<p class="fb-mail">📮 メールでも受け付けています<br>' + mailLink() + '</p></div>',
       'とじる', ctx.after);
     var stars = document.querySelectorAll('.fb-stars button');
     Array.prototype.forEach.call(stars, function (s) {
@@ -248,7 +253,7 @@
       '<li><b>💭のところで、あなたが質問を入力</b>します。自分の言葉でOK！（最初の患者プルルのときだけ、何を聞けばいいかが💭に出ます）</li>' +
       '<li>患者は何かを<b>隠しています</b>。📋カルテの記述や、話の中の言いよどみがヒントです。</li>' +
       '<li>さいごに、隠している真実を言いあて、背中を押す言葉をかけたらクリア！</li>' +
-      '<li>困ったら💡ヒント（1回目は考え方、2回目は言い方の例）。使うとスコアは少し下がります。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。</li></ol>' + metersHelp());
+      '<li>困ったら💡ヒント（1回目は考え方、2回目は言い方の例）。使うとスコアは少し下がります。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。</li></ol>' + metersHelp() + '<h4>📮 感想・お問い合わせ</h4><p>' + mailLink() + '</p>');
   };
 
   // ---------- オープニング ----------
