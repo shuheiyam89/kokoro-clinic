@@ -139,3 +139,40 @@ logo = remove_checker(load('logo'))
 k = 320 / logo.width
 crisp(shrink(logo, (320, round(logo.height * k)))).save(os.path.join(OUT, 'logo.png'))
 print('done ->', OUT)
+
+# まばたき用の閉じ目画像（目のまわりの色で目をぬりつぶし、閉じた目の線をひく）
+EYES = {  # 目の範囲 (x0, y0, x1, y1)。320x240用に縮めたあとの座標
+    'pururu': [(14, 43, 33, 63), (47, 43, 65, 63)],
+    'lumie': [(35, 51, 51, 68), (66, 51, 82, 68)],
+    'gald': [(25, 46, 39, 59), (55, 45, 70, 59)],
+}
+LINE = (58, 36, 40, 255)
+
+
+def blink_frame(name, face):
+    im = Image.open(os.path.join(OUT, '%s_%s.png' % (name, face))).convert('RGBA')
+    px = im.load()
+    for (x0, y0, x1, y1) in EYES[name]:
+        inner = x1 if x0 < im.width / 2 - 10 else x0 - 1  # 鼻がわ（肌の色が安定している方）
+        if name == 'lumie' or name == 'pururu':
+            inner = x1 + 1 if inner == x1 else x0 - 2
+        for y in range(y0, y1):
+            col = px[inner, y]
+            for x in range(x0, x1):
+                if px[x, y][3]:
+                    px[x, y] = col[:3] + (255,)
+        # 閉じた目（下向きのゆるい弧）
+        ly = y0 + round((y1 - y0) * 0.62)
+        w = x1 - x0
+        for x in range(x0 + 1, x1 - 1):
+            u = (x - x0) / (w - 1) * 2 - 1
+            yy = ly + round((1 - u * u) * 1.5)
+            px[x, yy] = LINE
+            px[x, yy - 1 if abs(u) > 0.6 else yy] = LINE
+    im.save(os.path.join(OUT, '%s_%s_blink.png' % (name, face)))
+
+
+for n in EYES:
+    for f in ['normal', 'sad', 'surprise']:  # 怒り顔は眉が目にかかるので、まばたきなし
+        blink_frame(n, f)
+print('blink frames done')

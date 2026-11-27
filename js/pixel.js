@@ -13,7 +13,10 @@ var Pixel = (function () {
   function ready(i) { return i && i.complete && i.naturalWidth > 0; }
   // 先に読みこんでおく
   ['room', 'room_night', 'room_front', 'room_night_front', 'space', 'space_tile', 'logo'].forEach(load);
-  Object.keys(CHARS).forEach(function (k) { FACES.forEach(function (f) { load(CHARS[k].name + '_' + f); }); });
+  var BLINK = { normal: 1, sad: 1, surprise: 1 };
+  Object.keys(CHARS).forEach(function (k) {
+    FACES.forEach(function (f) { load(CHARS[k].name + '_' + f); if (BLINK[f]) load(CHARS[k].name + '_' + f + '_blink'); });
+  });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
 
   function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, Math.round(x), Math.round(y)); return i; }
@@ -38,6 +41,8 @@ var Pixel = (function () {
       var face = FACES.indexOf(st.expr) >= 0 ? st.expr : 'normal';
       var i = load(ch.name + '_' + face);
       if (!ready(i)) i = load(ch.name + '_normal');
+      // まばたき（閉じ目の絵がある表情だけ）
+      if (st.blink && BLINK[face]) { var bi = load(ch.name + '_' + face + '_blink'); if (ready(bi)) i = bi; }
       if (ready(i)) {
         var t = st.t || 0;
         // 話している間は小さくはずみ、ふだんはゆっくり息をする

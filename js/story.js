@@ -34,7 +34,7 @@ var Story = (function () {
       if (g.st.phase === 'left') return { lines: out, waiting: null };
       var s = g.flow[g.idx];
       if (s.type === 'auto') { out = out.concat(s.lines); g.idx++; continue; }
-      if (s.type === 'say' && opts.ai) return { lines: out, say: s };
+      if (s.type === 'say' && opts.ai) return { lines: out, say: s, sayText: (g.bridge && g.bridge[g.idx]) || s.text };
       if (s.type === 'say') {
         out.push(L('me', s.text));
         out = out.concat(Engine.ask(g.p, g.st, s.text, { noHint: true }).lines).concat(episodes(g));
@@ -104,9 +104,20 @@ var Story = (function () {
     return groups.every(function (gr) { return gr.some(function (k) { return t.indexOf(Engine.norm(k)) >= 0; }); });
   }
   // サーバーに送る今の状態
+  // この発言のあとに来る「あなた」の決まった声かけ（AIに、聞いた言葉をふまえた言い方へ書きかえてもらう）
+  function nextSay(g) {
+    for (var i = g.idx + 1; i < g.flow.length; i++) {
+      var t = g.flow[i].type;
+      if (t === 'say') return i;
+      if (t !== 'auto') return -1;
+    }
+    return -1;
+  }
   function aiPayload(g, kind, text, history) {
-    var s = current(g);
+    var s = current(g), ns = nextSay(g);
+    g.bridgeFor = ns;
     return {
+      next_say: ns >= 0 ? g.flow[ns].text : '',
       pid: g.p.id, kind: kind, utterance: text,
       history: history, trust: g.st.trust, anger: g.st.anger || 0,
       seen: Object.keys(g.st.seen),
@@ -118,6 +129,7 @@ var Story = (function () {
     var s = current(g), st = g.st, out = [], ev = { clue: null };
     if (st.phase !== 'talk' && st.phase !== 'counsel') return { lines: [], ok: false };
     st.turns++;
+    if (res.bridge && g.bridgeFor >= 0) { g.bridge = g.bridge || {}; g.bridge[g.bridgeFor] = res.bridge; }
     st.trust = Math.max(0, Math.min(5, st.trust + (res.trust_change || 0)));
     (res.lines || []).forEach(function (l) { out.push(L('p', l.text, l.face)); });
     (res.revealed || []).forEach(function (id) {

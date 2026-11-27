@@ -194,7 +194,7 @@
     play(r.lines, function () {
       syncStatus();
       if (ST.phase === 'left') return leftPatient();
-      if (r.say) return speak(r.say.text, 'say');
+      if (r.say) return speak(r.sayText || r.say.text, 'say');
       if (r.waiting) setInput(r.waiting);
       else if (r.done || ST.phase === 'done') finish();
     });
