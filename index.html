@@ -9,7 +9,7 @@
 <script>
 // 古い版がブラウザに残っていたら、最新版を読み直す
 (function () {
-  var V = '22';
+  var V = '23';
   fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (v) {
     v = v.trim();
     if (v && v !== V && sessionStorage.getItem('kokoro_reload') !== v) {
@@ -21,7 +21,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=22">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 <div id="app">
@@ -31,7 +31,7 @@
     <div class="title-art"><canvas id="cv-title"></canvas></div>
     <div class="title-box">
       <p class="title-sub">宇宙ステーションの</p>
-      <h1><img class="logo" src="img/logo.png?v=22" alt="こころ診療所 ～ささやきカルテ～"></h1>
+      <h1><img class="logo" src="img/logo.png?v=23" alt="こころ診療所 ～ささやきカルテ～"></h1>
       <button class="btn big" id="btn-start">はじめる</button>
       <div class="title-links">
         <button class="btn ghost" id="btn-howto">あそびかた</button>
@@ -92,13 +92,13 @@
   <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
 
 </div>
-<script src="js/data-patients.js?v=22"></script>
-<script src="js/data-flow.js?v=22"></script>
-<script src="js/engine.js?v=22"></script>
-<script src="js/story.js?v=22"></script>
-<script src="js/ai.js?v=22"></script>
-<script src="js/audio.js?v=22"></script>
-<script src="js/pixel.js?v=22"></script>
-<script src="js/ui.js?v=22"></script>
+<script src="js/data-patients.js?v=23"></script>
+<script src="js/data-flow.js?v=23"></script>
+<script src="js/engine.js?v=23"></script>
+<script src="js/story.js?v=23"></script>
+<script src="js/ai.js?v=23"></script>
+<script src="js/audio.js?v=23"></script>
+<script src="js/pixel.js?v=23"></script>
+<script src="js/ui.js?v=23"></script>
 </body>
 </html>

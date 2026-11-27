@@ -83,6 +83,7 @@
   }
 
   function show(id) {
+    if (id !== 'scr-session') BGM.setTheme('default'); // 診察室の外では、いつもの曲
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.toggle('active', s.id === id); });
     setTimeout(fitHeight, 0);
   }
@@ -183,6 +184,7 @@
   var queue = [], typing = null, curLine = null, onQueueEnd = null, lastTrust = 0, lastAnger = 0, knownClues = 0;
 
   function startSession(p) {
+    BGM.setTheme(p.id); // 患者の性格に合わせた曲
     clearInterval(typing); typing = null; queue = [];
     P = p; G = Story.start(p); ST = G.st; log = []; newClues = 0; waiting = null;
     lastTrust = ST.trust; lastAnger = 0; knownClues = 0; lastFace = 'normal'; reactNext = false;
