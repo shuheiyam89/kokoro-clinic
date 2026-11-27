@@ -100,6 +100,41 @@
     $('modal').classList.remove('open');
     var f = modalOnClose; modalOnClose = null; if (f) f();
   };
+  // ---------- テストプレイの感想 ----------
+  var FB_URL = 'https://kokoro-clinic-api.netlify.app/api/feedback';
+  function fbButton() { return '<p class="fb-row"><button class="btn ghost fb-open">📝 感想を送る</button></p>'; }
+  function hookFeedback(ctx) {
+    var b = document.querySelector('#modal-body .fb-open');
+    if (b) b.onclick = function () { openFeedback(ctx); };
+  }
+  function openFeedback(ctx) {
+    ctx = ctx || {};
+    var rating = 0;
+    openModal('<div class="fb"><h3>📝 感想を送る</h3><p class="fb-lead">テストプレイありがとうございます！ 気づいたことを、なんでも教えてください。</p>' +
+      '<div class="fb-stars">' + [1, 2, 3, 4, 5].map(function (n) { return '<button data-n="' + n + '">☆</button>'; }).join('') + '</div>' +
+      '<textarea id="fb-text" maxlength="1000" rows="5" placeholder="よかったところ、わかりにくかったところ、こまったところ、ふしぎな返事をされた場面…"></textarea>' +
+      '<button class="btn" id="fb-send">送る</button><p class="fb-note">送られるのは、この感想・評価・遊んでいた場面・端末の種類だけです。</p><p id="fb-msg"></p></div>',
+      'とじる', ctx.after);
+    var stars = document.querySelectorAll('.fb-stars button');
+    Array.prototype.forEach.call(stars, function (s) {
+      s.onclick = function () {
+        rating = +s.getAttribute('data-n');
+        Array.prototype.forEach.call(stars, function (x) { x.textContent = +x.getAttribute('data-n') <= rating ? '★' : '☆'; });
+      };
+    });
+    $('fb-send').onclick = function () {
+      var text = $('fb-text').value.trim();
+      if (!text && !rating) { $('fb-msg').textContent = '星をえらぶか、感想を書いてください。'; return; }
+      $('fb-send').disabled = true; $('fb-msg').textContent = '送っています…';
+      fetch(FB_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, rating: rating, where: ctx.where || '', patient: ctx.patient || '', result: ctx.result || '', version: window.V || '' }) })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); })
+        .then(function () { $('modal-body').innerHTML = '<div class="result"><h3>ありがとうございました！</h3><p>感想を受け取りました。<br>これからのゲームづくりに役立てます。</p></div>'; })
+        .catch(function () { $('fb-send').disabled = false; $('fb-msg').textContent = 'うまく送れませんでした。少し時間をおいて、もう一度お願いします。'; });
+    };
+  }
+  $('btn-feedback').onclick = function () { openFeedback({ where: 'タイトル' }); };
+
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // ---------- タイトル ----------
@@ -392,7 +427,8 @@
   function leftPatient() {
     setInput(null); scene.fade = -0.03; $('inp').blur();
     setTimeout(function () {
-      openModal('<div class="result gameover"><h3>GAME OVER</h3><p class="big">💢 ' + esc(P.name) + 'は怒って帰ってしまった…</p><p>怒りメーターが満タンになってしまった。<br>相手が嫌がる言い方をしていなかったか、思い出してみよう。</p></div>', 'もう一度', function () { startSession(P); });
+      openModal('<div class="result gameover"><h3>GAME OVER</h3><p class="big">💢 ' + esc(P.name) + 'は怒って帰ってしまった…</p><p>怒りメーターが満タンになってしまった。<br>相手が嫌がる言い方をしていなかったか、思い出してみよう。</p></div>' + fbButton(), 'もう一度', function () { startSession(P); });
+      var p = P; hookFeedback({ where: '診察', patient: p.name, result: '怒って帰った', after: function () { startSession(p); } });
     }, 900);
   }
   function routeHtml() {
@@ -411,8 +447,10 @@
     setTimeout(function () {
       var next = PATIENTS.indexOf(P) + 1 < PATIENTS.length ? '<p>あたらしい予約が入りました！</p>' : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
       openModal('<div class="result"><h3>カウンセリング成功！</h3><p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
-        routeHtml() + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '<br>信頼度：<span style="color:#ff5a7e">' + '♥'.repeat(ST.trust) + '</span></p>' + next + '</div>',
+        routeHtml() + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '<br>信頼度：<span style="color:#ff5a7e">' + '♥'.repeat(ST.trust) + '</span></p>' + next + '</div>' + fbButton(),
         '予約リストへ', function () { buildList(); show('scr-select'); });
+      var rt = Engine.route(P, ST);
+      hookFeedback({ where: '診察', patient: P.name, result: 'クリア ' + rt.key + '「' + rt.name + '」', after: function () { buildList(); show('scr-select'); } });
     }, 1000);
   }
 

@@ -168,3 +168,14 @@ em.key { font-style: normal; color: #d8322a; font-weight: bold; }
 .dialog.narr em.key { color: #d8322a; }
 .result .route { color: #7a4a2a; background: #fff1d6; border-radius: 10px; padding: 8px; line-height: 1.6; }
 .result .route small { color: #9a7a5a; }
+
+/* テストプレイの感想 */
+.fb h3 { text-align: center; }
+.fb-lead { margin: 0 0 8px; font-size: 14px; color: #6b5a7e; }
+.fb-stars { display: flex; justify-content: center; gap: 6px; margin: 4px 0 10px; }
+.fb-stars button { font: inherit; font-size: 30px; line-height: 1; background: none; border: 0; color: #f0a830; padding: 2px 4px; }
+#fb-text { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px; border: 2px solid #e2c99f; border-radius: 10px; background: #fffdf8; resize: vertical; }
+#fb-send { display: block; margin: 10px auto 4px; }
+.fb-note { font-size: 12px; color: #9a8a7a; margin: 4px 0; text-align: center; }
+#fb-msg { text-align: center; color: #c94f7c; margin: 4px 0; min-height: 1em; }
+.fb-row { text-align: center; margin: 10px 0 0; }

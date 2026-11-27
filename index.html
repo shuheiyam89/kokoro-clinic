@@ -6,10 +6,17 @@
 <meta name="theme-color" content="#2b2340">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>こころ診療所 ～ささやきカルテ～</title>
+<meta name="description" content="宇宙ステーションの心療クリニックで、悩みをかかえた宇宙人の患者さんと、自分の言葉で会話して「隠している真実」を探すドット絵アドベンチャー。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shuheiyam89.github.io/kokoro-clinic/">
+<meta property="og:title" content="こころ診療所 ～ささやきカルテ～">
+<meta property="og:description" content="宇宙ステーションの心療クリニックで、悩みをかかえた宇宙人の患者さんと、自分の言葉で会話して「隠している真実」を探すドット絵アドベンチャー。">
+<meta property="og:image" content="https://shuheiyam89.github.io/kokoro-clinic/img/share.png">
+<meta name="twitter:card" content="summary_large_image">
 <script>
 // 古い版がブラウザに残っていたら、最新版を読み直す
 (function () {
-  var V = '27';
+  var V = '28'; window.V = V;
   fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (v) {
     v = v.trim();
     if (v && v !== V && sessionStorage.getItem('kokoro_reload') !== v) {
@@ -21,7 +28,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=27">
+<link rel="stylesheet" href="css/style.css?v=28">
 </head>
 <body>
 <div id="app">
@@ -31,12 +38,13 @@
     <div class="title-art"><canvas id="cv-title"></canvas></div>
     <div class="title-box">
       <p class="title-sub">宇宙ステーションの</p>
-      <h1><img class="logo" src="img/logo.png?v=27" alt="こころ診療所 ～ささやきカルテ～"></h1>
+      <h1><img class="logo" src="img/logo.png?v=28" alt="こころ診療所 ～ささやきカルテ～"></h1>
       <button class="btn big" id="btn-start">はじめる</button>
       <div class="title-links">
         <button class="btn ghost" id="btn-howto">あそびかた</button>
         <button class="btn ghost" id="btn-opening">オープニング</button>
         <button class="btn ghost music-btn">🎵 BGM</button>
+        <button class="btn ghost" id="btn-feedback">📝 感想</button>
       </div>
     </div>
   </section>
@@ -92,13 +100,13 @@
   <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
 
 </div>
-<script src="js/data-patients.js?v=27"></script>
-<script src="js/data-flow.js?v=27"></script>
-<script src="js/engine.js?v=27"></script>
-<script src="js/story.js?v=27"></script>
-<script src="js/ai.js?v=27"></script>
-<script src="js/audio.js?v=27"></script>
-<script src="js/pixel.js?v=27"></script>
-<script src="js/ui.js?v=27"></script>
+<script src="js/data-patients.js?v=28"></script>
+<script src="js/data-flow.js?v=28"></script>
+<script src="js/engine.js?v=28"></script>
+<script src="js/story.js?v=28"></script>
+<script src="js/ai.js?v=28"></script>
+<script src="js/audio.js?v=28"></script>
+<script src="js/pixel.js?v=28"></script>
+<script src="js/ui.js?v=28"></script>
 </body>
 </html>
