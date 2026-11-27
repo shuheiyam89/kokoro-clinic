@@ -57,7 +57,7 @@
     var now = Date.now(); if (now - lastPikiin < 600) return; lastPikiin = now;
     Pixel.fx('pikiin'); BGM.sfx('pikiin');
   }
-  var reactNext = false, lastFace = 'normal';
+  var reactNext = false, lastFace = 'normal', trustAtSpeak = 0;
   var scene = { fx: true, sprite: null, expr: 'normal', talk: false, blink: false, t: 0, alpha: 1, scale: 1 };
   var nextBlink = 2000, blinkEnd = 0;
   function active(id) { return $(id).classList.contains('active'); }
@@ -255,7 +255,7 @@
   function speak(text, kind) {
     var seq = ++talkSeq;
     var promise = AI.talk(Story.aiPayload(G, kind, text, history()));
-    reactNext = true;
+    reactNext = true; trustAtSpeak = ST.trust;
     play([{ who: 'me', text: text, auto: kind !== 'say' }], function () {
       waitReply(promise, function (res) {
         if (seq !== talkSeq) return;
@@ -361,7 +361,8 @@
     if (who === 'p') {
       var face = curLine.face || scene.expr;
       // あなたの言葉への反応や、表情が変わったときにエフェクト
-      if (reactNext || face !== lastFace) Pixel.fx(face);
+      // ハートは、本当に信頼が上がったときだけ（ほほえんだだけでは出さない）
+      if (reactNext || face !== lastFace) { if (face !== 'happy' || ST.trust > trustAtSpeak) Pixel.fx(face); }
       reactNext = false; lastFace = face;
       if (curLine.face) scene.expr = curLine.face; syncStatus();
     }
