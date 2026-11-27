@@ -7,6 +7,13 @@
   function store() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
   if (!save.cleared) save.cleared = {};
   if (!save.stars) save.stars = {};
+  // 文字サイズ（大きくすると、会話・候補ボタン・入力欄の字が大きくなる）
+  function applyFont() {
+    document.body.classList.toggle('bigtext', !!save.big);
+    var b = document.getElementById('btn-font'); if (b) b.textContent = '🔠 文字：' + (save.big ? '大きい' : 'ふつう');
+  }
+  applyFont();
+  document.getElementById('btn-font').onclick = function () { save.big = !save.big; store(); applyFont(); };
 
   // ---------- スマホの画面高さ（キーボード対応） ----------
   var app = $('app');
@@ -253,7 +260,7 @@
       '<li><b>💭のところで、あなたが質問を入力</b>します。自分の言葉でOK！（最初の患者プルルのときだけ、何を聞けばいいかが💭に出ます）</li>' +
       '<li>患者は何かを<b>隠しています</b>。📋カルテの記述や、話の中の言いよどみがヒントです。</li>' +
       '<li>さいごに、隠している真実を言いあて、背中を押す言葉をかけたらクリア！</li>' +
-      '<li>困ったら💡ヒント（1回目は考え方、2回目は言い方の例）。使うとスコアは少し下がります。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。</li></ol>' + metersHelp() + '<h4>📮 感想・お問い合わせ</h4><p>' + mailLink() + '</p>');
+      '<li>文字を打つのが大変なときは、入力欄の上の<b>候補ボタン</b>をタップ。赤い字の言葉について聞いたり、真実を言うときに言葉を足したりできます。</li><li>困ったら💡ヒント（1回目は考え方、2回目は言い方の例）。使うとスコアは少し下がります。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。</li></ol>' + metersHelp() + '<h4>📮 感想・お問い合わせ</h4><p>' + mailLink() + '</p>');
   };
 
   // ---------- オープニング ----------
@@ -363,7 +370,19 @@
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
     show('scr-session');
     $('d-text').textContent = ''; $('d-name').textContent = '';
-    setTimeout(advance, 500);
+    if (!save.tutorial) {
+      save.tutorial = true; store();
+      setTimeout(function () { openModal(tutorialHtml(), 'はじめる', function () { setTimeout(advance, 300); }); }, 400);
+    } else setTimeout(advance, 500);
+  }
+  function tutorialHtml() {
+    return '<h3>はじめての診察</h3><ol class="tut">' +
+      '<li><span class="ti">👆</span><span>会話は<b>タップ</b>で進みます。</span></li>' +
+      '<li><span class="ti">💭</span><span>💭が出たら、聞きたいことを<b>下の入力欄</b>に書いて「送信」。<br>文字を打つのが大変なら、入力欄の上の<b>候補ボタン</b>をタップするだけでもOK。</span></li>' +
+      '<li><span class="ti">❤️</span><span>上の<b>♥信頼度</b>は、やさしい言葉で上がります。<b>💢怒り</b>が満タンになると、患者は帰ってしまいます。</span></li>' +
+      '<li><span class="ti">📋</span><span><b>赤い字</b>は大事な手がかり。📋カルテにたまります。気になる持ち物などを聞くと<b>✦エピソード</b>が起き、結末が変わります。</span></li>' +
+      '<li><span class="ti">💡</span><span>困ったら<b>💡ヒント</b>。</span></li></ol>' +
+      '<p class="tut-note">字が小さいときは、タイトル画面の「🔠 文字」で大きくできます。</p>';
   }
 
   // 台本を入力待ちまで進める（あなたの声かけ say も、AIが患者の返事を作る）
@@ -425,8 +444,58 @@
     bar.className = 'inputbar' + (s ? ' wait' : '') + (type === 'truth' ? ' diagnose' : type === 'counsel' ? ' counsel' : '');
     inp.disabled = !s; $('btn-send').disabled = !s; $('btn-hint').disabled = !s;
     inp.placeholder = !s ? '（会話を聞いています…）' : type === 'truth' ? 'あなたが隠しているのは…' : type === 'counsel' ? 'さいごに声をかける…' : '質問を入力…';
+    renderChips(s);
     tag.className = 'phase-tag' + (type === 'counsel' ? ' counsel' : '');
     tag.textContent = type === 'truth' ? '🔍 真実をつげる' : type === 'counsel' ? '💗 背中を押す言葉をかけよう' : '';
+  }
+
+  // ---------- 候補ボタン（文字を打たなくても遊べるように） ----------
+  // 質問の場面：赤い字の言葉について聞く／ふつうの聞き方。タップでそのまま送る
+  // 真実・背中を押す場面：赤い字の言葉を入力欄に足す（文は自分で仕上げる）
+  var ASK_CHIPS = ['くわしく教えてください', 'いつからですか？', 'それは、つらかったですね', 'ほかに気になっていることは？', 'ふだんの毎日はどうですか？', 'だれかに話せていますか？'];
+  var COUNSEL_CHIPS = ['ひとりで抱えなくていいんですよ', '本当の気持ちを、伝えてみませんか？', 'いっしょに方法を考えましょう'];
+  function chip(label, cls, fn) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (cls ? ' ' + cls : ''); b.textContent = label;
+    b.onclick = function (e) { e.preventDefault(); if (busy || !waiting) return; fn(); };
+    return b;
+  }
+  function freshWords() {
+    return (G.words || []).filter(function (w) { return !(G.usedWords || {})[w]; }).slice(-3).reverse();
+  }
+  function renderChips(s) {
+    var box = $('chips'); box.innerHTML = '';
+    box.classList.toggle('on', !!s);
+    if (!s) return;
+    G.usedChips = G.usedChips || {}; G.usedWords = G.usedWords || {};
+    var send = function (t, mark) { return function () { mark(); var k = waiting.type; setInput(null); speak(t, k); }; };
+    if (s.type === 'ask') {
+      if (s.example && (P.difficulty || 1) <= 1) box.appendChild(chip(s.example, 'rec', send(s.example, function () {})));
+      freshWords().slice(0, 2).forEach(function (w) {
+        var t = '「' + w + '」について、もう少し教えてください。';
+        box.appendChild(chip('「' + w + '」って？', 'word', send(t, function () { G.usedWords[w] = true; })));
+      });
+      ASK_CHIPS.filter(function (c) { return !G.usedChips[c]; }).slice(0, 3).forEach(function (c) {
+        box.appendChild(chip(c, '', send(c, function () { G.usedChips[c] = true; })));
+      });
+    } else {
+      var words = (G.words || []).slice(-4).reverse();
+      words.forEach(function (w) {
+        box.appendChild(chip('＋' + w, 'word', function () {
+          var inp = $('inp'); inp.value = (inp.value ? inp.value + '、' : '') + w; inp.scrollLeft = inp.scrollWidth;
+        }));
+      });
+      if (s.type === 'counsel') COUNSEL_CHIPS.forEach(function (c) { box.appendChild(chip(c, '', send(c, function () {}))); });
+    }
+    box.scrollLeft = 0;
+  }
+  // 赤い字の言葉をおぼえておく（候補ボタンに使う）
+  function noteWords(text) {
+    var m, re = /【([^】]+)】/g;
+    G.words = G.words || [];
+    while ((m = re.exec(text))) {
+      var w = m[1].replace(/[「」『』。、！？…]/g, '').trim();
+      if (w && w.length <= 16 && G.words.indexOf(w) < 0) G.words.push(w);
+    }
   }
 
   function renderTrust(delta) {
@@ -501,7 +570,7 @@
       reactNext = false; lastFace = face;
       if (curLine.face) scene.expr = curLine.face; syncStatus();
     }
-    if ((who === 'p' || who === 'narr') && curLine.text.indexOf('【') >= 0) pikiin();
+    if ((who === 'p' || who === 'narr') && curLine.text.indexOf('【') >= 0) { pikiin(); noteWords(curLine.text); }
     if (who === 'nurse') nurseMood = moodOf(curLine.text);
     log.push({ who: who, text: curLine.text, name: curLine.name });
     if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
@@ -604,7 +673,11 @@
     var rows = P.karte.map(function (k) { return '<tr><th>' + esc(k[0]) + '</th><td>' + esc(k[1]) + '</td></tr>'; }).join('');
     var n = ST.clues.length, start = n - newClues;
     var clues = n ? ST.clues.map(function (c, i) { return '<li class="' + (i >= start ? 'new' : '') + '">' + esc(c) + '</li>'; }).join('') : '<li>まだ手がかりはない。話を聞いて集めよう。</li>';
-    openModal('<h3>📋 カルテ</h3><table class="karte">' + rows + '</table><h4>聞き出した手がかり</h4><ul class="clues">' + clues + '</ul>');
+    var ep = Story.episodeCount(G), epHtml = '<h4>✦ エピソード ' + ep.found.length + ' / ' + ep.total + '</h4><ul class="eps">' +
+      ep.found.map(function (t) { return '<li class="got">✦ ' + esc(t) + '</li>'; }).join('') +
+      new Array(ep.total - ep.found.length + 1).join('<li>？？？</li>') + '</ul>' +
+      (ep.found.length < ep.total ? '<p class="ep-tip">持ち物や、話に出てきた気になるものについて聞くと見つかるかも。見つけた数で結末が変わります。</p>' : '');
+    openModal('<h3>📋 カルテ</h3><table class="karte">' + rows + '</table><h4>聞き出した手がかり</h4><ul class="clues">' + clues + '</ul>' + epHtml);
     newClues = 0; updateBadge();
   };
   $('btn-log').onclick = function () {

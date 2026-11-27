@@ -45,6 +45,7 @@ var Story = (function () {
       if (s.type === 'ask' && seenAll(g, s)) { g.idx++; continue; } // もう聞き出していたら飛ばす
       g.miss = 0;
       if (s.type === 'ask') ensureTrust(g, s);
+      if (s.type === 'truth' && !g.recapped) out = out.concat(recap(g));
       out.push(think(g, s));
       return { lines: out, waiting: s };
     }
@@ -81,6 +82,13 @@ var Story = (function () {
     if (s.type !== 'ask' || autoHint(g)) return L('think', s.prompt);
     g.thinkN = (g.thinkN || 0) + 1;
     return L('think', THINK[g.thinkN % THINK.length]);
+  }
+  // 真実をつげる前に、ここまでの手がかりをふりかえる（急に答えを求められた感じにならないように）
+  function recap(g) {
+    g.recapped = true;
+    var c = g.st.clues.slice(-3);
+    if (!c.length) return [];
+    return [L('think', '（手がかりがそろってきた。カルテを見かえしてみよう…）')].concat(c.map(function (x) { return L('narr', '📋 ' + x); }));
   }
   // 外したとき。プルルは2回目でヒント、3回目で助手が代わりに聞く。リュミエ以降は何も教えない
   function miss(g, s, out) {
@@ -159,6 +167,10 @@ var Story = (function () {
       var tp = topicById(g, id);
       if (tp && !st.seen[id] && revealed.indexOf(id) < 0 && keyMatch(text, tp.keys) && canReveal(g, tp)) revealed.push(id);
     });
+    // エピソードのある話題も同じく：プレイヤーがはっきりそれを聞いていれば記録する（気になる物を聞いたのに何も起きない、を防ぐ）
+    if (!isSay) g.p.topics.forEach(function (tp) {
+      if (tp.episode && !st.seen[tp.id] && revealed.indexOf(tp.id) < 0 && keyMatch(text, tp.keys) && canReveal(g, tp)) revealed.push(tp.id);
+    });
     revealed.forEach(function (id) {
       var tp = topicById(g, id);
       if (!st.seen[id] && canReveal(g, tp)) { st.seen[id] = true; fresh = true; if (tp.clue && st.clues.indexOf(tp.clue) < 0) { st.clues.push(tp.clue); ev.clue = tp.clue; } }
@@ -200,6 +212,10 @@ var Story = (function () {
     return { lines: out, ok: true };
   }
 
-  return { start: start, run: run, answer: answer, hint: hint, current: current, aiPayload: aiPayload, applyAI: applyAI, localSay: localSay };
+  function episodeCount(g) {
+    var all = g.p.topics.filter(function (t) { return t.episode; });
+    return { found: all.filter(function (t) { return g.epDone[t.id]; }).map(function (t) { return t.episode.title; }), total: all.length };
+  }
+  return { episodeCount: episodeCount, start: start, run: run, answer: answer, hint: hint, current: current, aiPayload: aiPayload, applyAI: applyAI, localSay: localSay };
 })();
 if (typeof module !== 'undefined') module.exports = Story;

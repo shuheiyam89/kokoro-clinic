@@ -214,3 +214,30 @@ em.key { font-style: normal; color: #d8322a; font-weight: bold; }
 #patient-list li.locked.paid .info { opacity: 1; color: #7a4a2a; }
 .result.paywall .pw-points { text-align: left; margin: 8px auto; padding-left: 1.2em; line-height: 1.7; max-width: 320px; }
 .result.paywall #pw-msg { color: #e0413a; font-size: 13px; min-height: 1em; }
+
+/* ---- 候補ボタン ---- */
+.chips { display: none; gap: 6px; padding: 8px 10px 0; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips.on { display: flex; }
+.chip { font: inherit; flex: none; border: 0; border-radius: 16px; padding: 7px 12px; background: #fff3dc; color: #4a3424; font-size: 14px; box-shadow: 0 2px 0 #c9a56f; cursor: pointer; }
+.chip.word { background: #ffe3ea; color: #a8335e; box-shadow: 0 2px 0 #e59ab3; }
+.chip.rec { background: #ffd98a; }
+.chip:active { transform: translateY(2px); box-shadow: none; }
+#app.kb .chips { display: none; }
+/* ---- はじめての説明・カルテのエピソード ---- */
+.tut { list-style: none; padding: 0; margin: 0; }
+.tut li { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; }
+.tut .ti { font-size: 22px; line-height: 1.3; flex: none; width: 30px; text-align: center; }
+.tut-note { font-size: 13px; color: #7a6a5a; }
+.eps { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.eps li { background: #eee6f7; color: #8a7aa8; border-radius: 6px; padding: 4px 10px; font-size: 14px; }
+.eps li.got { background: #fff0c9; color: #8a5a1a; }
+.ep-tip { font-size: 13px; color: #7a6a5a; margin: 4px 0 0; }
+/* ---- 文字を大きく ---- */
+body.bigtext #d-text { font-size: 20px; line-height: 1.6; }
+body.bigtext #scr-session .dialog { height: 178px; }
+body.bigtext .chip { font-size: 17px; padding: 9px 14px; }
+body.bigtext .inputbar input { font-size: 18px; }
+body.bigtext .tool { font-size: 16px; }
+body.bigtext #modal-body { font-size: 17px; }
+body.bigtext .karte, body.bigtext .clues li { font-size: 16px; }
