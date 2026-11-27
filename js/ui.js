@@ -63,7 +63,6 @@
       Pixel.render(ctxScene, scene);
       if (cvNurse.offsetParent) Pixel.nurse(cvNurse.getContext('2d'), ts, nurseMood);
     }
-    $('sound-hint').classList.toggle('off', BGM.isMuted() || BGM.running());
     var opN = $('cv-op-nurse'); if (opN && opN.offsetParent) Pixel.nurse(opN.getContext('2d'), ts, 'happy'); else if (active('scr-title')) {
       var p = PATIENTS[((ts / 3500) | 0) % PATIENTS.length];
       Pixel.render(ctxTitle, { sprite: p.sprite, expr: 'happy', t: ts, blink: scene.blink, scale: 1 });
