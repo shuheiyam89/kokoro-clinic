@@ -16,7 +16,7 @@
 <script>
 // 古い版がブラウザに残っていたら、最新版を読み直す
 (function () {
-  var V = '30'; window.V = V;
+  var V = '31'; window.V = V;
   fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (v) {
     v = v.trim();
     if (v && v !== V && sessionStorage.getItem('kokoro_reload') !== v) {
@@ -28,7 +28,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -38,12 +38,13 @@
     <div class="title-art"><canvas id="cv-title"></canvas></div>
     <div class="title-box">
       <p class="title-sub">宇宙ステーションの</p>
-      <h1><img class="logo" src="img/logo.png?v=30" alt="こころ診療所 ～ささやきカルテ～"></h1>
+      <h1><img class="logo" src="img/logo.png?v=31" alt="こころ診療所 ～ささやきカルテ～"></h1>
       <button class="btn big" id="btn-start">はじめる</button>
       <div class="title-links">
         <button class="btn ghost" id="btn-howto">あそびかた</button>
         <button class="btn ghost" id="btn-opening">オープニング</button>
         <button class="btn ghost music-btn">🎵 BGM</button>
+        <button class="btn ghost" id="btn-records">🏆 記録</button>
         <button class="btn ghost" id="btn-feedback">📝 感想</button>
       </div>
     </div>
@@ -58,7 +59,7 @@
 
   <!-- 予約リスト -->
   <section id="scr-select" class="screen">
-    <header class="bar"><button class="icon" id="btn-sel-back">←</button><h2>本日の予約</h2><button class="icon music-btn small">🎵</button></header>
+    <header class="bar"><button class="icon" id="btn-sel-back">←</button><h2>本日の予約</h2><button class="icon" id="btn-records2">🏆</button><button class="icon music-btn small">🎵</button></header>
     <p class="sel-lead">あなたはカウンセラー。今日も、悩みをかかえたお客様がやってくる。</p>
     <ul id="patient-list"></ul>
   </section>
@@ -68,7 +69,7 @@
     <header class="bar">
       <button class="icon" id="btn-quit">←</button>
       <div class="who"><b id="s-name"></b><small id="s-species"></small></div>
-      <div class="meters">
+      <div class="meters" id="s-meters" title="タップで説明">
         <div class="trust" id="s-trust" aria-label="信頼度"></div>
         <div class="anger" id="s-anger" aria-label="怒りメーター"><span class="ico">💢</span><span class="gauge"><i id="s-anger-fill"></i></span></div>
       </div>
@@ -100,13 +101,13 @@
   <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
 
 </div>
-<script src="js/data-patients.js?v=30"></script>
-<script src="js/data-flow.js?v=30"></script>
-<script src="js/engine.js?v=30"></script>
-<script src="js/story.js?v=30"></script>
-<script src="js/ai.js?v=30"></script>
-<script src="js/audio.js?v=30"></script>
-<script src="js/pixel.js?v=30"></script>
-<script src="js/ui.js?v=30"></script>
+<script src="js/data-patients.js?v=31"></script>
+<script src="js/data-flow.js?v=31"></script>
+<script src="js/engine.js?v=31"></script>
+<script src="js/story.js?v=31"></script>
+<script src="js/ai.js?v=31"></script>
+<script src="js/audio.js?v=31"></script>
+<script src="js/pixel.js?v=31"></script>
+<script src="js/ui.js?v=31"></script>
 </body>
 </html>

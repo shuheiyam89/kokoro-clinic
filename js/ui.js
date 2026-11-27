@@ -100,6 +100,103 @@
     $('modal').classList.remove('open');
     var f = modalOnClose; modalOnClose = null; if (f) f();
   };
+  // ---------- ♥と💢の説明 ----------
+  function metersHelp() {
+    return '<h4><span style="color:#ff5a7e">♥</span> 信頼度（5つまで）</h4><p>患者があなたをどれだけ信頼しているか。気持ちに寄り添う言葉や、相手の誇りを認める言葉で上がり、きつい言い方で下がります。<b>信頼が足りないと、心の奥の話はしてくれません。</b></p>' +
+      '<h4>💢 怒りメーター</h4><p>患者が嫌だと感じる言い方をするとたまります。<b>満タンになると怒って帰ってしまいます</b>（真実を打ち明けたあとは帰りません）。謝ったり寄り添ったりすると、少し下がります。</p>';
+  }
+  $('s-meters').onclick = function () { openModal('<h3>メーターの見かた</h3>' + metersHelp()); };
+
+  // ---------- スコア・記録 ----------
+  // クリア1000点＋エピソード1つ300点＋信頼♥1つ100点＋質問が少ないほど最大600点－怒り1つ100点－ヒント1回100点
+  function scoreOf(p, st, g) {
+    var rt = Engine.route(p, st), asked = g.asked || 0, hints = g.hints || 0;
+    var parts = [
+      ['クリア', 1000],
+      ['エピソード ' + rt.found + '個', rt.found * 300],
+      ['信頼度 ♥' + st.trust, st.trust * 100],
+      ['質問 ' + asked + '回', Math.max(0, 30 - asked) * 20],
+      ['怒り 💢' + (st.anger || 0), -(st.anger || 0) * 100],
+      ['ヒント ' + hints + '回', -hints * 100]
+    ];
+    var total = Math.max(0, parts.reduce(function (a, x) { return a + x[1]; }, 0));
+    var rank = total >= 2700 ? 'S' : total >= 2200 ? 'A' : total >= 1700 ? 'B' : 'C';
+    return { total: total, rank: rank, parts: parts, route: rt };
+  }
+  function record(p, sc) {
+    save.records = save.records || {};
+    var r = save.records[p.id] || { best: 0, rank: '', clears: 0, routes: {} };
+    r.clears++; r.routes[sc.route.key] = sc.route.name;
+    var isBest = sc.total > r.best;
+    if (isBest) { r.best = sc.total; r.rank = sc.rank; r.found = sc.route.found; r.total = sc.route.total; }
+    save.records[p.id] = r; store();
+    return isBest;
+  }
+  function openRecords() {
+    var recs = save.records || {}, sum = 0;
+    var rows = PATIENTS.map(function (p, i) {
+      var r = recs[p.id];
+      if (!r) return '<div class="rec locked"><b>' + (unlocked(i) ? esc(p.name) : '？？？') + '</b><span>まだクリアしていません</span></div>';
+      sum += r.best;
+      var ends = ['normal', 'good', 'best'].map(function (k, j) { return '<span class="end' + (r.routes[k] ? ' got' : '') + '">' + '★'.repeat(j + 1) + (r.routes[k] ? '「' + esc(r.routes[k]) + '」' : '？') + '</span>'; }).join('');
+      return '<div class="rec"><b>' + esc(p.name) + '</b><span class="rank r' + r.rank + '">' + r.rank + '</span><span class="pts">' + r.best + '点</span>' +
+        '<div class="ends">' + ends + '</div><small>クリア ' + r.clears + '回　エピソード最高 ' + (r.found || 0) + ' / ' + (r.total || 2) + '</small></div>';
+    }).join('');
+    openModal('<h3>🏆 記録</h3>' + rows + '<p class="rec-sum">合計スコア <b>' + sum + '</b> 点</p><p class="rec-note">スコアは、クリア＋見つけたエピソード＋信頼度＋質問の少なさ。怒らせたりヒントを使ったりすると下がります。</p>');
+  }
+  $('btn-records').onclick = openRecords;
+  $('btn-records2').onclick = openRecords;
+
+  // ---------- クリア画面のシェア ----------
+  var SHARE_URL = 'https://shuheiyam89.github.io/kokoro-clinic/';
+  var STARS = { normal: 1, good: 2, best: 3 };
+  function shareText(p, sc) {
+    return '「こころ診療所」で' + p.name + 'の悩みを解決！ ' + '★'.repeat(STARS[sc.route.key]) + ' エンディング「' + sc.route.name + '」 スコア' + sc.total + '点（' + sc.rank + 'ランク）';
+  }
+  function shareImage(p, sc, cb) {
+    var W = 1200, H = 630, c = document.createElement('canvas'); c.width = W; c.height = H;
+    var x = c.getContext('2d'), sc2 = document.createElement('canvas'); sc2.width = Pixel.W; sc2.height = Pixel.H;
+    var s2 = sc2.getContext('2d'); s2.imageSmoothingEnabled = false;
+    var cg = sc.route.key === 'best' ? 'end_' + p.id : null;
+    Pixel.render(s2, { sprite: p.sprite, expr: 'happy', t: 0, alpha: 1, night: p.id === 'gald', cg: cg, cgT0: -1e9 });
+    x.imageSmoothingEnabled = false;
+    x.drawImage(sc2, 0, 30, 320, 168, 0, 0, W, 630);
+    var gr = x.createLinearGradient(0, 330, 0, H);
+    gr.addColorStop(0, 'rgba(26,20,52,0)'); gr.addColorStop(0.35, 'rgba(26,20,52,.82)'); gr.addColorStop(1, 'rgba(26,20,52,.95)');
+    x.fillStyle = gr; x.fillRect(0, 330, W, H - 330);
+    var font = "'DotGothic16', sans-serif";
+    x.textAlign = 'center'; x.fillStyle = '#ffe0a6'; x.font = '58px ' + font;
+    x.fillText(p.name + 'の悩みを解決！', W / 2, 470);
+    x.fillStyle = '#ffffff'; x.font = '36px ' + font;
+    x.fillText('★'.repeat(STARS[sc.route.key]) + '  エンディング「' + sc.route.name + '」', W / 2, 530);
+    x.fillStyle = '#ffd84a'; x.font = '38px ' + font;
+    x.fillText('スコア ' + sc.total + ' 点　' + sc.rank + 'ランク', W / 2, 590);
+    var logo = new Image();
+    logo.onload = function () { x.drawImage(logo, 24, 18, 300, Math.round(logo.height * 300 / logo.width)); done(); };
+    logo.onerror = done; logo.src = 'img/logo.png?v=' + (window.V || '');
+    function done() { c.toBlob(function (b) { cb(b, c.toDataURL('image/png')); }, 'image/png'); }
+  }
+  function shareResult(p, sc, after) {
+    var text = shareText(p, sc), NL = String.fromCharCode(10);
+    shareImage(p, sc, function (blob, url) {
+      var file = blob && window.File ? new File([blob], 'kokoro-clinic.png', { type: 'image/png' }) : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], text: text + NL + SHARE_URL }).catch(function () {});
+        return;
+      }
+      // 画像つきで共有できない端末：画像を見せて、X・LINE・リンクのコピーを選べるようにする
+      var enc = encodeURIComponent;
+      openModal('<div class="share"><h3>📣 シェアする</h3><img src="' + url + '" alt="クリア画面"><p class="share-note">画像は長押し（右クリック）で保存できます</p>' +
+        '<a class="btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text=' + enc(text) + '&url=' + enc(SHARE_URL) + '">Xでシェア</a>' +
+        '<a class="btn" target="_blank" rel="noopener" href="https://line.me/R/share?text=' + enc(text + NL + SHARE_URL) + '">LINEで送る</a>' +
+        '<button class="btn ghost" id="share-copy">文とリンクをコピー</button></div>', 'とじる', after);
+      $('share-copy').onclick = function () {
+        var t = text + NL + SHARE_URL;
+        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { $('share-copy').textContent = 'コピーしました！'; }, function () { prompt('コピーしてください', t); });
+      };
+    });
+  }
+
   // ---------- テストプレイの感想 ----------
   var FB_URL = 'https://kokoro-clinic-api.netlify.app/api/feedback';
   function fbButton() { return '<p class="fb-row"><button class="btn ghost fb-open">📝 感想を送る</button></p>'; }
@@ -147,10 +244,10 @@
     openModal('<h3>あそびかた</h3><ol class="howto">' +
       '<li>あなたは宇宙ステーションの「こころ診療所」のカウンセラー。いろいろな星の患者が悩みを話しにきます。</li>' +
       '<li>会話は自動で進みます。画面の会話欄をタップすると次のセリフへ。</li>' +
-      '<li><b>💭のところで、あなたが質問を入力</b>します。何を聞けばいいかは💭に書いてあります。自分の言葉でOK！</li>' +
+      '<li><b>💭のところで、あなたが質問を入力</b>します。自分の言葉でOK！（最初の患者プルルのときだけ、何を聞けばいいかが💭に出ます）</li>' +
       '<li>患者は何かを<b>隠しています</b>。📋カルテの記述や、話の中の言いよどみがヒントです。</li>' +
       '<li>さいごに、隠している真実を言いあて、背中を押す言葉をかけたらクリア！</li>' +
-      '<li>困ったら💡ヒント。3回うまくいかないと、看護師のミケが手伝ってくれます。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。怒りメーター💢が満タンになると、患者さんは帰ってしまいます。</li></ol>');
+      '<li>困ったら💡ヒント（1回目は考え方、2回目は言い方の例）。使うとスコアは少し下がります。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。</li></ol>' + metersHelp());
   };
 
   // ---------- オープニング ----------
@@ -256,6 +353,7 @@
     var seq = ++talkSeq;
     var promise = AI.talk(Story.aiPayload(G, kind, text, history()));
     reactNext = true; trustAtSpeak = ST.trust;
+    if (kind !== 'say') G.asked = (G.asked || 0) + 1; // スコア用：あなたが入力した回数
     play([{ who: 'me', text: text, auto: kind !== 'say' }], function () {
       waitReply(promise, function (res) {
         if (seq !== talkSeq) return;
@@ -420,6 +518,7 @@
   $('btn-hint').onclick = function () {
     if (busy || !waiting) return;
     var s = waiting; setInput(null);
+    G.hints = (G.hints || 0) + 1; // スコア用
     play(Story.hint(G), function () { setInput(s); });
   };
   $('inp').addEventListener('focus', function () { setTimeout(fitHeight, 300); });
@@ -445,13 +544,18 @@
     var rk = { normal: 1, good: 2, best: 3 }[Engine.route(P, ST).key];
     save.stars[P.id] = Math.max(save.stars[P.id] || 0, rk); store();
     var total = P.topics.filter(function (t) { return t.clue; }).length;
+    var sc = scoreOf(P, ST, G), isBest = record(P, sc), pp = P;
+    var scoreHtml = '<div class="score"><span class="rank r' + sc.rank + '">' + sc.rank + '</span><b>' + sc.total + '</b> 点' + (isBest ? ' <em>自己ベスト！</em>' : '') +
+      '<table>' + sc.parts.map(function (x) { return '<tr><td>' + esc(x[0]) + '</td><td>' + (x[1] >= 0 ? '+' : '') + x[1] + '</td></tr>'; }).join('') + '</table></div>';
     setTimeout(function () {
       var next = PATIENTS.indexOf(P) + 1 < PATIENTS.length ? '<p>あたらしい予約が入りました！</p>' : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
       openModal('<div class="result"><h3>カウンセリング成功！</h3><p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
-        routeHtml() + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '<br>信頼度：<span style="color:#ff5a7e">' + '♥'.repeat(ST.trust) + '</span></p>' + next + '</div>' + fbButton(),
+        routeHtml() + scoreHtml + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '</p>' + next + '</div>' +
+        '<p class="fb-row"><button class="btn" id="btn-share">📣 シェアする</button></p>' + fbButton(),
         '予約リストへ', function () { buildList(); show('scr-select'); });
       var rt = Engine.route(P, ST);
-      hookFeedback({ where: '診察', patient: P.name, result: 'クリア ' + rt.key + '「' + rt.name + '」', after: function () { buildList(); show('scr-select'); } });
+      hookFeedback({ where: '診察', patient: P.name, result: 'クリア ' + rt.key + '「' + rt.name + '」 ' + sc.total + '点', after: function () { buildList(); show('scr-select'); } });
+      $('btn-share').onclick = function () { shareResult(pp, sc, function () { buildList(); show('scr-select'); }); };
     }, 1000);
   }
 
