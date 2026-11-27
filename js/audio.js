@@ -94,6 +94,37 @@ var BGM = (function () {
     timer = setInterval(tick, 120);
     tick();
   }
+  // 効果音「ピキーン」（手がかりを見つけたとき）。BGMのフィルターを通さず、明るく鳴らす
+  var sfxOut = null;
+  function sfx(name) {
+    if (muted) return;
+    if (!ctx && !init()) return;
+    if (ctx.state !== 'running') ctx.resume();
+    if (!sfxOut) { sfxOut = ctx.createGain(); sfxOut.gain.value = 0.32; sfxOut.connect(ctx.destination); }
+    var t = ctx.currentTime + 0.01;
+    if (name === 'pikiin') {
+      // 「ピッ」と上がって「キーン」と伸びる2音
+      [[1568, 2093, 0, 0.18, 0.5], [2637, 2637, 0.06, 0.2, 0.9]].forEach(function (v) {
+        ['triangle', 'sine'].forEach(function (type, k) {
+          var o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = type; o.detune.value = k ? 6 : -6;
+          o.frequency.setValueAtTime(v[0], t + v[2]);
+          o.frequency.exponentialRampToValueAtTime(v[1], t + v[2] + 0.05);
+          g.gain.setValueAtTime(0.0001, t + v[2]);
+          g.gain.linearRampToValueAtTime(v[3], t + v[2] + 0.008);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + v[2] + v[4]);
+          o.connect(g); g.connect(sfxOut); o.start(t + v[2]); o.stop(t + v[2] + v[4] + 0.05);
+        });
+      });
+      // きらきら
+      [4186, 3520, 4699, 5274].forEach(function (f, i) {
+        var o = ctx.createOscillator(), g = ctx.createGain(), s = t + 0.1 + i * 0.05;
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, s); g.gain.linearRampToValueAtTime(0.05, s + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.25);
+        o.connect(g); g.connect(sfxOut); o.start(s); o.stop(s + 0.3);
+      });
+    }
+  }
   function running() { return !!(ctx && ctx.state === 'running' && timer); }
   // ブラウザは、画面にふれるまで音を出させてくれない。最初にふれた瞬間（指が触れたとき）に鳴らす
   function unlock() {
@@ -115,5 +146,5 @@ var BGM = (function () {
     if (document.hidden) ctx.suspend(); else if (timer) { ctx.resume(); nextTime = Math.max(nextTime, ctx.currentTime + 0.1); }
   });
 
-  return { start: start, setMuted: setMuted, isMuted: function () { return muted; }, running: running };
+  return { start: start, setMuted: setMuted, isMuted: function () { return muted; }, running: running, sfx: sfx };
 })();

@@ -21,6 +21,85 @@ var Pixel = (function () {
 
   function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, Math.round(x), Math.round(y)); return i; }
 
+  // ---------- 反応エフェクト ----------
+  var ICONS = {
+    excl: ['.ooo.', 'oyyyo', 'oyyyo', 'oyyyo', '.oyo.', '.oyo.', '..o..', '.ooo.', 'oyyyo', '.ooo.'],
+    heart: ['.oo.oo.', 'oppoppo', 'opwpppo', 'opppppo', '.opppo.', '..opo..', '...o...'],
+    vein: ['.rrr.rrr.', 'rr.r.r.rr', 'r..r.r..r', 'rrr...rrr', '.........', 'rrr...rrr', 'r..r.r..r', 'rr.r.r.rr', '.rrr.rrr.']
+  };
+  var ICOL = { o: '#3a2430', y: '#ffd84a', p: '#ff7a9c', w: '#ffffff', r: '#e8364a' };
+  function icon(c, name, x, y, k) {
+    var g = ICONS[name];
+    for (var j = 0; j < g.length; j++) for (var i = 0; i < g[j].length; i++) {
+      var ch = g[j].charAt(i); if (ch === '.') continue;
+      c.fillStyle = ICOL[ch]; c.fillRect(Math.round(x + i * k), Math.round(y + j * k), k, k);
+    }
+  }
+  var FX_LEN = { surprise: 900, angry: 1300, happy: 1500, sad: 1600, cry: 1600, pikiin: 800 };
+  var fxList = [];
+  function fx(type) {
+    if (!FX_LEN[type]) return;
+    var now = performance.now();
+    fxList = fxList.filter(function (f) { return f.type !== type && now - f.t0 < FX_LEN[f.type]; });
+    fxList.push({ type: type, t0: now });
+  }
+  function shakeX(now) {
+    var off = 0;
+    fxList.forEach(function (f) { if (f.type === 'angry' && now - f.t0 < 320) off = Math.round(Math.sin((now - f.t0) / 22) * 2); });
+    return off;
+  }
+  function star(c, x, y, r, col) {
+    c.fillStyle = col;
+    c.fillRect(Math.round(x - r), Math.round(y), Math.round(r * 2 + 1), 1);
+    c.fillRect(Math.round(x), Math.round(y - r), 1, Math.round(r * 2 + 1));
+    var d = Math.round(r * 0.35);
+    c.fillRect(Math.round(x - d), Math.round(y - d), d * 2 + 1, d * 2 + 1);
+  }
+  // cx, top = キャラの中心と頭のてっぺん, w = 幅
+  function drawFx(c, cx, top, w) {
+    var now = performance.now();
+    fxList = fxList.filter(function (f) { return now - f.t0 < FX_LEN[f.type]; });
+    fxList.forEach(function (f) {
+      var e = now - f.t0, p = e / FX_LEN[f.type], hx = cx + w * 0.4, hy = top + 2;
+      c.save();
+      if (f.type === 'surprise') {
+        var pop = e < 120 ? -6 + e / 20 : 0; // ぴょこっと飛び出す
+        c.globalAlpha = p > 0.8 ? (1 - p) * 5 : 1;
+        icon(c, 'excl', hx, hy - 6 + pop, 3);
+      } else if (f.type === 'angry') {
+        var k = 3 + (((e / 160) | 0) % 2); // ぴくぴく脈打つ
+        c.globalAlpha = p > 0.8 ? (1 - p) * 5 : 1;
+        icon(c, 'vein', hx - (k - 3) * 4, hy - (k - 3) * 4, k);
+      } else if (f.type === 'happy') {
+        for (var i = 0; i < 3; i++) {
+          var q = Math.max(0, Math.min(1, (e - i * 220) / 1100));
+          if (q <= 0 || q >= 1) continue;
+          c.globalAlpha = q > 0.7 ? (1 - q) / 0.3 : 1;
+          icon(c, 'heart', cx - 10 + (i - 1) * w * 0.36 + Math.sin(q * 6 + i) * 3, top + 8 - q * 30, 3);
+        }
+      } else if (f.type === 'sad' || f.type === 'cry') {
+        c.globalAlpha = Math.min(1, e / 200) * (p > 0.75 ? (1 - p) * 4 : 1) * 0.85;
+        c.fillStyle = '#5560c0';
+        for (var j = 0; j < 4; j++) {
+          var lx = cx - w * 0.3 + j * 7, ly = top - 6 + ((e / 90 + j * 3) % 6);
+          for (var s = 0; s < 5; s++) c.fillRect(Math.round(lx), Math.round(ly + s * 5), 2, 3);
+        }
+      } else if (f.type === 'pikiin') {
+        // 画面がぴかっと光り、きらきらの星がはじける
+        if (e < 140) { c.globalAlpha = 0.55 * (1 - e / 140); c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H); }
+        c.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
+        var sx = cx - w * 0.42, sy = top + 4, grow = Math.min(1, e / 160);
+        star(c, sx, sy, 5 + grow * 12, '#ffe36a');
+        star(c, sx, sy, 3 + grow * 6, '#ffffff');
+        for (var n = 0; n < 8; n++) {
+          var a = n / 8 * Math.PI * 2 + 0.3, rr = 8 + p * 34;
+          star(c, sx + Math.cos(a) * rr, sy + Math.sin(a) * rr, 2 + (1 - p) * 2, n % 2 ? '#ffe36a' : '#ffffff');
+        }
+      }
+      c.restore();
+    });
+  }
+
   // ガルドの、火のかわりに出る煙
   function smoke(c, st, top, h) {
     if (st.sprite !== 'dragon' || !(st.expr === 'sad' || st.expr === 'cry' || st.expr === 'angry')) return;
@@ -50,10 +129,11 @@ var Pixel = (function () {
         var top = ch.bottom - i.height + bob;
         c.save();
         c.globalAlpha = st.alpha != null ? st.alpha : 1;
-        c.drawImage(i, Math.round(160 - i.width / 2), Math.round(top));
+        c.drawImage(i, Math.round(160 - i.width / 2) + (st.fx ? shakeX(performance.now()) : 0), Math.round(top));
         c.restore();
         if (ch.front) draw(c, night ? 'room_night_front' : 'room_front', 0, 0);
         smoke(c, st, top, i.height);
+        if (st.fx) drawFx(c, 160, top, i.width);
       }
     }
   }
@@ -97,5 +177,5 @@ var Pixel = (function () {
     if (ph < 0.12) { var sx = 300 - ph * 1800, sy = 16 + ph * 520; for (var q = 0; q < 14; q++) { c.save(); c.globalAlpha = 1 - q / 14; c.fillStyle = '#fff'; c.fillRect(Math.round(sx + q * 2), Math.round(sy - q), 1, 1); c.restore(); } }
   }
 
-  return { W: W, H: H, render: render, nurse: nurse, renderSpace: renderSpace };
+  return { W: W, H: H, fx: fx, render: render, nurse: nurse, renderSpace: renderSpace };
 })();

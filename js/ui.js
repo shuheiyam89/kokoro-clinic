@@ -51,7 +51,14 @@
     if (/！/.test(t) && !/？/.test(t)) return 'happy';
     return 'normal';
   }
-  var scene = { sprite: null, expr: 'normal', talk: false, blink: false, t: 0, alpha: 1, scale: 1 };
+  // 手がかりが出たときの「ピキーン」（同じ瞬間に2回鳴らさない）
+  var lastPikiin = 0;
+  function pikiin() {
+    var now = Date.now(); if (now - lastPikiin < 600) return; lastPikiin = now;
+    Pixel.fx('pikiin'); BGM.sfx('pikiin');
+  }
+  var reactNext = false, lastFace = 'normal';
+  var scene = { fx: true, sprite: null, expr: 'normal', talk: false, blink: false, t: 0, alpha: 1, scale: 1 };
   var nextBlink = 2000, blinkEnd = 0;
   function active(id) { return $(id).classList.contains('active'); }
   function loop(ts) {
@@ -178,7 +185,7 @@
   function startSession(p) {
     clearInterval(typing); typing = null; queue = [];
     P = p; G = Story.start(p); ST = G.st; log = []; newClues = 0; waiting = null;
-    lastTrust = ST.trust; lastAnger = 0; knownClues = 0;
+    lastTrust = ST.trust; lastAnger = 0; knownClues = 0; lastFace = 'normal'; reactNext = false;
     scene.sprite = p.sprite; scene.expr = 'normal'; scene.alpha = 0; scene.fade = 0.03;
     scene.flower = false; scene.night = p.id === 'gald';
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
@@ -211,6 +218,7 @@
   function speak(text, kind) {
     var seq = ++talkSeq;
     var promise = AI.talk(Story.aiPayload(G, kind, text, history()));
+    reactNext = true;
     play([{ who: 'me', text: text, auto: kind !== 'say' }], function () {
       waitReply(promise, function (res) {
         if (seq !== talkSeq) return;
@@ -262,7 +270,7 @@
     el.classList.toggle('hot', a > 0);
     el.classList.toggle('danger', a >= Engine.MAX_ANGER - 1 && ST.phase !== 'left');
     el.classList.remove('up'); void el.offsetWidth;
-    if (delta > 0) el.classList.add('up');
+    if (delta > 0) { el.classList.add('up'); Pixel.fx('angry'); }
     if (delta > 0 && a === Engine.MAX_ANGER - 1) toast('💢 ' + P.name + 'は、かなりイライラしている…！');
     else if (delta > 0) toast('💢 ' + P.name + 'は、むっとしたようだ');
     else if (delta < 0) toast('😌 ' + P.name + 'は、少し落ちついたようだ');
@@ -281,6 +289,7 @@
     if (ST.clues.length > knownClues) {
       newClues += ST.clues.length - knownClues; knownClues = ST.clues.length; updateBadge();
       toast('📋 カルテに追記：' + ST.clues[ST.clues.length - 1]);
+      pikiin();
     }
   }
 
@@ -301,7 +310,14 @@
     dlg.className = 'dialog ' + who;
     $('d-name').textContent = who === 'p' ? P.name : who === 'nurse' ? '看護師ミケ' : who === 'me' ? 'あなた'
       : who === 'think' ? (wt === 'truth' ? '💭 真実は…？' : wt === 'counsel' ? '💭 どう声をかける？' : '💭 なにを聞こう？') : '';
-    if (who === 'p') { if (curLine.face) scene.expr = curLine.face; syncStatus(); }
+    if (who === 'p') {
+      var face = curLine.face || scene.expr;
+      // あなたの言葉への反応や、表情が変わったときにエフェクト
+      if (reactNext || face !== lastFace) Pixel.fx(face);
+      reactNext = false; lastFace = face;
+      if (curLine.face) scene.expr = curLine.face; syncStatus();
+    }
+    if ((who === 'p' || who === 'narr') && curLine.text.indexOf('【') >= 0) pikiin();
     if (who === 'nurse') nurseMood = moodOf(curLine.text);
     log.push({ who: who, text: curLine.text });
     if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
