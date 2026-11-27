@@ -1,32 +1,38 @@
 # SNSやLINEでリンクを貼ったときに出る画像（1200x630）を作る: python tools/make-share.py
+# 水彩の高画質の絵（img/*.webp・ゲーム座標の3倍）のまま組み、最後に 1200x630 へなめらかに縮める
 import os
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, 'img')
-K = 4                       # 300x158（ゲーム座標）で組んで4倍
 S = 3
+
+
 def L(name):
-    # 高画質の絵（WebP, S倍）をゲーム座標の大きさにして読む
-    im = Image.open(os.path.join(IMG, name + '.webp')).convert('RGBA')
-    return im.resize((round(im.width / S), round(im.height / S)), Image.LANCZOS)
-room = L('room')
-base = room.crop((10, 52, 310, 210))
-def put(name, x, bottom, scale):
+    return Image.open(os.path.join(IMG, name + '.webp')).convert('RGBA')
+
+
+room = L('room')                                   # 960x720
+OX, OY = 0, 140
+base = room.crop((OX, OY, 960, OY + 504))          # 1200:630 と同じ比率（960x504）
+
+
+def put(name, x, bottom, scale=1.0):
     s = L(name)
-    s = s.convert('RGBa').resize((round(s.width * scale), round(s.height * scale)), Image.BOX).convert('RGBA')
-    a = s.getchannel('A').point(lambda v: 255 if v >= 110 else 0); s.putalpha(a)
-    base.alpha_composite(s, (x - s.width // 2, bottom - s.height))
-put('pururu_happy', 78, 140, 0.72)
-put('lumie_happy', 150, 128, 0.72)
-put('gald_happy', 224, 142, 0.72)
-big = base.resize((300 * K, 158 * K), Image.NEAREST).crop((0, 1, 1200, 631))
+    if scale != 1.0:
+        s = s.convert('RGBa').resize((round(s.width * scale), round(s.height * scale)), Image.LANCZOS).convert('RGBA')
+    base.alpha_composite(s, (round(x - OX - s.width / 2), round(bottom - OY - s.height)))
+
+
+# ソファに3人（ゲームと同じ座る高さ。ゲーム座標×S）
+put('pururu_happy', 98 * S, 198 * S, 0.58)
+put('lumie_happy', 160 * S, 200 * S, 0.58)
+put('gald_happy', 224 * S, 199 * S, 0.58)
+big = base.resize((1200, 630), Image.LANCZOS)
 logo = Image.open(os.path.join(IMG, 'logo.png')).convert('RGBA')
-logo = logo.resize((620, round(logo.height * 620 / logo.width)), Image.LANCZOS)
+logo = logo.resize((520, round(logo.height * 520 / logo.width)), Image.LANCZOS)
 glow = Image.new('RGBA', big.size, (0, 0, 0, 0))
-from PIL import ImageDraw, ImageFilter
-d = ImageDraw.Draw(glow); d.ellipse((240, -40, 960, logo.height + 40), fill=(255, 250, 240, 150))
-glow = glow.filter(ImageFilter.GaussianBlur(30))
-big.alpha_composite(glow)
-big.alpha_composite(logo, ((1200 - logo.width) // 2, 14))
+ImageDraw.Draw(glow).ellipse((300, -50, 900, logo.height + 20), fill=(255, 249, 238, 190))
+big.alpha_composite(glow.filter(ImageFilter.GaussianBlur(34)))
+big.alpha_composite(logo, ((1200 - logo.width) // 2, 6))
 big.convert('RGB').save(os.path.join(IMG, 'share.png'), optimize=True)
 print('share.png', big.size)
