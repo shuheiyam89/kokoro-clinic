@@ -15,7 +15,10 @@
 - 済：Capacitor 8 のプロジェクト（非公開リポジトリ shuheiyam89/kokoro-clinic-play）。RevenueCat プラグイン入り
 - 済：RevenueCat の橋渡し `js/store-revenuecat.js`（Play 版だけ読み込む）。キーは `kokoro-clinic-play/play.config.json` の `revenuecatKey` を差し替える（今は REPLACE_ME＝モック）
 - 済：アップロード鍵（`C:/Users/81802/Documents/kokoro-clinic-signing/`）と、署名付き AAB の試作（版 1.0・versionCode 1）
-- 未：RevenueCat のアカウント・設定、Play Console でのアプリ作成（本人確認の完了待ち）
+- 済：RevenueCat の初期設定（プロジェクト e6c5d237・Google Play アプリ登録・エンタイトルメント full_unlock）。公開SDKキーを play.config.json に設定し、AAB を作り直し（release/kokoro-clinic-1.0-vc1-revenuecat.aab）
+- 未：Play Console でのアプリ作成（本人確認の完了待ち）→ AAB を内部テストへ → アイテム unlock_all_patients（600円）作成
+- 未（本人確認と商品作成のあとで）：サービスアカウント JSON を RevenueCat に登録 → 商品 unlock_all_patients を取り込み、full_unlock に紐付け → ライセンステスターで購入・復元を確認
+- 未：12人以上×14日間のクローズドテスト（個人アカウントのため）
 
 ### Play 版のビルド手順（このPC）
 1. ゲーム側：`node tools/build-play.js`（www を作る。play.config.json のキーを入れる）
