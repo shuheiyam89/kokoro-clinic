@@ -164,30 +164,69 @@
 
   // ---------- 診察 ----------
   var P = null, G = null, ST = null, log = [], newClues = 0, busy = false, waiting = null;
-  var queue = [], typing = null, curLine = null, onQueueEnd = null, lastTrust = 0, knownClues = 0;
+  var queue = [], typing = null, curLine = null, onQueueEnd = null, lastTrust = 0, lastAnger = 0, knownClues = 0;
 
   function startSession(p) {
     clearInterval(typing); typing = null; queue = [];
     P = p; G = Story.start(p); ST = G.st; log = []; newClues = 0; waiting = null;
-    lastTrust = ST.trust; knownClues = 0;
+    lastTrust = ST.trust; lastAnger = 0; knownClues = 0;
     scene.sprite = p.sprite; scene.expr = 'normal'; scene.alpha = 0; scene.fade = 0.03;
     scene.flower = false; scene.night = p.id === 'gald';
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
-    setInput(null); renderTrust(0); updateBadge();
+    setInput(null); renderTrust(0); renderAnger(0); updateBadge();
     show('scr-session');
     $('d-text').textContent = ''; $('d-name').textContent = '';
     setTimeout(advance, 500);
   }
 
-  // 台本を入力待ちまで進める
+  // 台本を入力待ちまで進める（あなたの声かけ say も、AIが患者の返事を作る）
   function advance() {
-    var r = Story.run(G);
+    var r = Story.run(G, { ai: true });
     play(r.lines, function () {
       syncStatus();
       if (ST.phase === 'left') return leftPatient();
+      if (r.say) return speak(r.say.text, 'say');
       if (r.waiting) setInput(r.waiting);
       else if (r.done || ST.phase === 'done') finish();
     });
+  }
+
+  // 会話ログから、AIに渡す直近のやりとりを作る
+  function history() {
+    return log.filter(function (l) { return l.who === 'me' || l.who === 'p'; }).slice(-24)
+      .map(function (l) { return { who: l.who, text: l.text }; });
+  }
+
+  // あなたの発言 → AIが患者の返事を作る（だめならキーワードの返事）
+  var talkSeq = 0;
+  function speak(text, kind) {
+    var seq = ++talkSeq;
+    var promise = AI.talk(Story.aiPayload(G, kind, text, history()));
+    play([{ who: 'me', text: text }], function () {
+      waitReply(promise, function (res) {
+        if (seq !== talkSeq) return;
+        var a;
+        if (kind === 'say') a = res ? Story.applyAI(G, text, res, true) : Story.localSay(G);
+        else a = res ? Story.applyAI(G, text, res, false) : Story.answer(G, text);
+        play(a.lines, function () {
+          syncStatus();
+          if (ST.phase === 'left') return leftPatient();
+          if (kind === 'say' || a.ok) advance();
+          else setInput(Story.current(G));
+        });
+      });
+    });
+  }
+  // 返事を待つあいだ「……」を出す
+  function waitReply(promise, cb) {
+    var done = false, dots = 0, timer = null;
+    promise.then(function (res) { done = true; clearInterval(timer); cb(res); });
+    setTimeout(function () {
+      if (done) return;
+      var dlg = $('dialog');
+      dlg.className = 'dialog p'; $('d-name').textContent = P.name; scene.talk = false;
+      timer = setInterval(function () { dots = (dots + 1) % 4; $('d-text').textContent = '……'.slice(0, 1 + dots % 2) + '　'; }, 350);
+    }, 150);
   }
 
   function setInput(s) {
@@ -208,6 +247,17 @@
     el.classList.remove('pulse', 'down'); void el.offsetWidth;
     if (delta > 0) el.classList.add('pulse'); if (delta < 0) el.classList.add('down');
   }
+  function renderAnger(delta) {
+    var el = $('s-anger'), a = ST.anger || 0;
+    $('s-anger-fill').style.width = (a / Engine.MAX_ANGER * 100) + '%';
+    el.classList.toggle('hot', a > 0);
+    el.classList.toggle('danger', a >= Engine.MAX_ANGER - 1 && ST.phase !== 'left');
+    el.classList.remove('up'); void el.offsetWidth;
+    if (delta > 0) el.classList.add('up');
+    if (delta > 0 && a === Engine.MAX_ANGER - 1) toast('💢 ' + P.name + 'は、かなりイライラしている…！');
+    else if (delta > 0) toast('💢 ' + P.name + 'は、むっとしたようだ');
+    else if (delta < 0) toast('😌 ' + P.name + 'は、少し落ちついたようだ');
+  }
   function updateBadge() { var b = $('karte-badge'); b.textContent = newClues; b.classList.toggle('on', newClues > 0); }
 
   var toastTimer;
@@ -218,6 +268,7 @@
   // 信頼度と手がかりの表示を、エンジンの状態に合わせる
   function syncStatus() {
     if (ST.trust !== lastTrust) { renderTrust(ST.trust - lastTrust); lastTrust = ST.trust; }
+    if ((ST.anger || 0) !== lastAnger) { renderAnger((ST.anger || 0) - lastAnger); lastAnger = ST.anger || 0; }
     if (ST.clues.length > knownClues) {
       newClues += ST.clues.length - knownClues; knownClues = ST.clues.length; updateBadge();
       toast('📋 カルテに追記：' + ST.clues[ST.clues.length - 1]);
@@ -256,7 +307,7 @@
   function finishTyping() {
     clearInterval(typing); typing = null; scene.talk = false;
     $('d-text').textContent = curLine.text;
-    if (!queue.length && curLine.who === 'think') { nextLine(); return; }
+    if (!queue.length && (curLine.who === 'think' || curLine.who === 'me')) { nextLine(); return; }
     if (queue.length || onQueueEnd) $('dialog').classList.add('more');
     else nextLine();
   }
@@ -274,14 +325,9 @@
     var inp = $('inp'), text = inp.value.trim();
     if (!text || busy || !waiting) return;
     inp.value = '';
+    var kind = waiting.type;
     setInput(null);
-    var a = Story.answer(G, text);
-    play([{ who: 'me', text: text }].concat(a.lines), function () {
-      syncStatus();
-      if (ST.phase === 'left') return leftPatient();
-      if (a.ok) advance();
-      else setInput(Story.current(G));
-    });
+    speak(text, kind);
   };
   $('btn-hint').onclick = function () {
     if (busy || !waiting) return;
@@ -294,7 +340,7 @@
   function leftPatient() {
     setInput(null); scene.fade = -0.03; $('inp').blur();
     setTimeout(function () {
-      openModal('<div class="result"><h3>' + esc(P.name) + 'は帰ってしまった…</h3><p>信頼をなくしてしまったようだ。<br>もう一度、やさしく話を聞いてみよう。</p></div>', 'もう一度', function () { startSession(P); });
+      openModal('<div class="result gameover"><h3>GAME OVER</h3><p class="big">💢 ' + esc(P.name) + 'は怒って帰ってしまった…</p><p>怒りメーターが満タンになってしまった。<br>相手が嫌がる言い方をしていなかったか、思い出してみよう。</p></div>', 'もう一度', function () { startSession(P); });
     }, 900);
   }
   function finish() {

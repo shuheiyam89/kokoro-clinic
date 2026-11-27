@@ -15,12 +15,14 @@ var Story = (function () {
   function seenAll(g, s) { return s.expect.every(function (id) { return g.st.seen[id]; }); }
 
   // 自動で進むところを進め、入力待ちの場所で止まる
-  function run(g) {
+  function run(g, opts) {
+    opts = opts || {};
     var out = [];
     while (g.idx < g.flow.length) {
       if (g.st.phase === 'left') return { lines: out, waiting: null };
       var s = g.flow[g.idx];
       if (s.type === 'auto') { out = out.concat(s.lines); g.idx++; continue; }
+      if (s.type === 'say' && opts.ai) return { lines: out, say: s };
       if (s.type === 'say') {
         out.push(L('me', s.text));
         out = out.concat(Engine.ask(g.p, g.st, s.text, { noHint: true }).lines);
@@ -75,6 +77,79 @@ var Story = (function () {
     return [L('nurse', s.hint), L('think', s.prompt)];
   }
 
-  return { start: start, run: run, answer: answer, hint: hint, current: current };
+  // ---- AIの返事を使う ----
+  function topicById(g, id) { return g.p.topics.filter(function (t) { return t.id === id; })[0]; }
+  function canReveal(g, tp) {
+    if (!tp) return false;
+    if (tp.needs && !tp.needs.every(function (n) { return g.st.seen[n]; })) return false;
+    return !(tp.minTrust && g.st.trust < tp.minTrust);
+  }
+  // キーワードでも正解とみなせるか（AIの判定が厳しすぎたときの保険）
+  function keyMatch(text, groups) {
+    var t = Engine.norm(text);
+    return groups.every(function (gr) { return gr.some(function (k) { return t.indexOf(Engine.norm(k)) >= 0; }); });
+  }
+  // サーバーに送る今の状態
+  function aiPayload(g, kind, text, history) {
+    var s = current(g);
+    return {
+      pid: g.p.id, kind: kind, utterance: text,
+      history: history, trust: g.st.trust, anger: g.st.anger || 0,
+      seen: Object.keys(g.st.seen),
+      goal: s && s.type === 'ask' ? s.expect : []
+    };
+  }
+  // AIの返事を状態に反映する。say のときは必ず次へ進む
+  function applyAI(g, text, res, isSay) {
+    var s = current(g), st = g.st, out = [], ev = { clue: null };
+    if (st.phase !== 'talk' && st.phase !== 'counsel') return { lines: [], ok: false };
+    st.turns++;
+    st.trust = Math.max(0, Math.min(5, st.trust + (res.trust_change || 0)));
+    (res.lines || []).forEach(function (l) { out.push(L('p', l.text, l.face)); });
+    (res.revealed || []).forEach(function (id) {
+      var tp = topicById(g, id);
+      if (!st.seen[id] && canReveal(g, tp)) { st.seen[id] = true; if (tp.clue && st.clues.indexOf(tp.clue) < 0) { st.clues.push(tp.clue); ev.clue = tp.clue; } }
+    });
+    // 怒りメーター（古いサーバーで anger_change がないときは、信頼の下がり方から決める）
+    var da = typeof res.anger_change === 'number' ? res.anger_change : Math.max(0, -(res.trust_change || 0));
+    out = out.concat(Engine.changeAnger(g.p, st, da));
+    if (st.phase === 'left') return { lines: out, ev: ev };
+    if (isSay) { g.idx++; return { lines: out, ev: ev, ok: true }; }
+    var ok = false;
+    if (s.type === 'ask') ok = seenAll(g, s);
+    else if (s.type === 'truth') {
+      if (res.truth !== 'correct' && keyMatch(text, g.p.truth.groups)) { res.truth = 'correct'; out = g.p.truth.success.slice(0, 1); }
+      if (res.truth === 'correct') {
+        ok = true; st.phase = 'counsel';
+        out = out.concat(g.p.truth.success.slice(1));
+        out.push(L('nurse', '真実にたどりついた！ さいごに、どんな言葉で背中を押してあげる？'));
+      } else if (res.truth === 'partial') {
+        out.push(L('nurse', '（おしい！ だれが・何を・どうしたのか、もう少しくわしく言ってみよう）'));
+      }
+    } else if (s.type === 'counsel') {
+      if (!res.counsel_ok && g.p.counsel.good.some(function (c) { return keyMatch(text, c.groups); })) res.counsel_ok = true;
+      if (res.counsel_ok) { ok = true; st.phase = 'done'; out = out.concat(g.p.ending); }
+    }
+    if (ok) { g.idx++; return { lines: out, ev: ev, ok: true }; }
+    g.miss++;
+    if (g.miss === 2) { out.push(L('nurse', s.hint)); out.push(L('think', s.prompt)); }
+    else if (g.miss >= 3) {
+      out.push(L('nurse', '先生、こんなふうに言ってみてはどうでしょう？'));
+      out.push(L('me', s.example));
+      var r2 = exec(g, s, s.example);
+      out = out.concat(r2.lines);
+      g.idx++;
+      return { lines: out, ev: ev, ok: true, assisted: true };
+    } else out.push(L('think', s.prompt));
+    return { lines: out, ev: ev };
+  }
+  // AIが使えないときの say（キーワードの返事）
+  function localSay(g) {
+    var s = current(g), out = Engine.ask(g.p, g.st, s.text, { noHint: true }).lines;
+    g.idx++;
+    return { lines: out, ok: true };
+  }
+
+  return { start: start, run: run, answer: answer, hint: hint, current: current, aiPayload: aiPayload, applyAI: applyAI, localSay: localSay };
 })();
 if (typeof module !== 'undefined') module.exports = Story;

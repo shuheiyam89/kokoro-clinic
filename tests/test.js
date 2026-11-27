@@ -28,9 +28,11 @@ play('gald', ['眠れないんですね', '昔は隊長だったんですか？�
 
 // 乱暴な言葉で帰ってしまうか
 var g = P[2], st = E.newState(g);
+E.ask(g, st, 'さっさと言え'); E.ask(g, st, 'さっさと言え');
+var notYet = st.phase !== 'left' && st.anger === 4;
 E.ask(g, st, 'さっさと言え');
-console.log((st.phase === 'left' ? 'OK  ' : 'NG  ') + '失礼な言葉で帰る');
-if (st.phase !== 'left') fails++;
+console.log((notYet && st.phase === 'left' ? 'OK  ' : 'NG  ') + '失礼な言葉で怒りメーターが満タンになり帰る');
+if (!(notYet && st.phase === 'left')) fails++;
 // きもち が もち に誤反応しないか
 var pr = P[0], s2 = E.newState(pr); s2.trust = 5;
 var r = E.ask(pr, s2, 'いまのきもちは？');

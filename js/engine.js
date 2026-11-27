@@ -1,6 +1,7 @@
 // 会話エンジン（画面に依存しない。node のテストからも使う）
 var Engine = (function () {
   var MAX_TRUST = 5;
+  var MAX_ANGER = 5; // 怒りメーター。満タンで帰ってしまう
   var EMPATHY_CAP = 3; // 寄り添いで上がる信頼の上限回数
 
   function norm(s) {
@@ -26,7 +27,7 @@ var Engine = (function () {
   function pick(list, n) { return list[n % list.length]; }
 
   function newState(p) {
-    return { pid: p.id, trust: p.startTrust, seen: {}, clues: [], phase: 'talk',
+    return { pid: p.id, trust: p.startTrust, anger: 0, seen: {}, clues: [], phase: 'talk',
       fallbacks: 0, empathyGiven: 0, cycle: 0, turns: 0 };
   }
 
@@ -39,6 +40,12 @@ var Engine = (function () {
   function addClue(st, c) { if (c && st.clues.indexOf(c) < 0) { st.clues.push(c); return true; } return false; }
   function changeTrust(st, d) { st.trust = Math.max(0, Math.min(MAX_TRUST, st.trust + d)); }
 
+  // 怒りを増減する。満タンになったら帰るセリフを返す
+  function changeAnger(p, st, d) {
+    if (st.phase === 'left') return [];
+    st.anger = Math.max(0, Math.min(MAX_ANGER, (st.anger || 0) + d));
+    return st.anger >= MAX_ANGER ? leaveLines(p, st) : [];
+  }
   function leaveLines(p, st) {
     st.phase = 'left';
     return p.leave.map(function (x, i) { return L(i === 0 ? 'p' : 'narr', x, 'angry'); });
@@ -67,13 +74,14 @@ var Engine = (function () {
     if (hasAny(t, COMMON_RUDE)) {
       changeTrust(st, -2);
       out.push(L('p', pick(p.rude, st.cycle++), 'angry'));
-      if (st.trust <= 0) out = out.concat(leaveLines(p, st));
+      out = out.concat(changeAnger(p, st, 2));
       ev.trust = st.trust - before;
       return { lines: out, ev: ev };
     }
 
     var empathic = hasAny(t, COMMON_EMPATHY);
     if (empathic && st.empathyGiven < EMPATHY_CAP) { st.empathyGiven++; changeTrust(st, 1); }
+    if (empathic) changeAnger(p, st, -1); // やさしい言葉で少し落ちつく
 
     // 一致する話題をさがす
     var cands = [];
@@ -140,7 +148,7 @@ var Engine = (function () {
     } else {
       if (!opts.noPenalty) changeTrust(st, -1);
       out.push(L('p', pick(p.truth.wrong, st.cycle++), 'angry'));
-      if (st.trust <= 0) out = out.concat(leaveLines(p, st));
+      if (!opts.noPenalty) out = out.concat(changeAnger(p, st, 1));
     }
     ev.trust = st.trust - before;
     return { lines: out, ev: ev, ok: false };
@@ -151,7 +159,7 @@ var Engine = (function () {
     opts = opts || {};
     var t = norm(input), out = [];
     if (!t || st.phase !== 'counsel') return { lines: out, ok: false };
-    if (hasAny(t, COMMON_RUDE)) { out.push(L('p', pick(p.rude, st.cycle++), 'angry')); return { lines: out, ok: false }; }
+    if (hasAny(t, COMMON_RUDE)) { out.push(L('p', pick(p.rude, st.cycle++), 'angry')); out = out.concat(changeAnger(p, st, 2)); return { lines: out, ok: false }; }
     for (var i = 0; i < p.counsel.good.length; i++) {
       var g = p.counsel.good[i];
       if (matchAll(t, g.groups)) {
@@ -172,6 +180,6 @@ var Engine = (function () {
     return { lines: out, ok: false };
   }
 
-  return { norm: norm, newState: newState, ask: ask, diagnose: diagnose, counsel: counsel, MAX_TRUST: MAX_TRUST };
+  return { norm: norm, newState: newState, ask: ask, diagnose: diagnose, counsel: counsel, changeAnger: changeAnger, MAX_TRUST: MAX_TRUST, MAX_ANGER: MAX_ANGER };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

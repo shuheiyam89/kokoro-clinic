@@ -29,6 +29,16 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .who { flex: 1; line-height: 1.15; }
 .who b { font-weight: normal; font-size: 18px; color: #ffe0a6; }
 .who small { display: block; font-size: 12px; color: #c9b8f0; }
+.meters { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.anger { display: flex; align-items: center; gap: 4px; }
+.anger .ico { font-size: 13px; filter: grayscale(.6); transition: filter .3s; }
+.anger .gauge { position: relative; width: 82px; height: 9px; background: #241a38; border: 2px solid #5d4d7c; border-radius: 3px; overflow: hidden; }
+.anger .gauge i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #ffb347, #ff4a3d); transition: width .5s; }
+.anger .gauge::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 14px, #241a38 14px 16px); }
+.anger.hot .ico { filter: none; }
+.anger.danger .gauge { border-color: #ff4a3d; animation: dangerGlow .8s infinite alternate; }
+.anger.up { animation: shake .4s; }
+@keyframes dangerGlow { to { box-shadow: 0 0 8px #ff4a3d; } }
 .trust { font-size: 17px; letter-spacing: 1px; color: #ff7c95; white-space: nowrap; }
 .trust .off { color: #5d4d7c; }
 .trust.pulse { animation: pulse .5s; }
@@ -149,3 +159,4 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 /* スキップは右下 */
 .skip { top: auto; bottom: calc(14px + env(safe-area-inset-bottom)); right: 12px; }
 .op-box { bottom: calc(64px + env(safe-area-inset-bottom)); }
+#modal-body .result.gameover h3 { color: #e0413a; letter-spacing: 4px; font-size: 26px; }
