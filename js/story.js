@@ -33,7 +33,9 @@ var Story = (function () {
     while (g.idx < g.flow.length) {
       if (g.st.phase === 'left') return { lines: out, waiting: null };
       var s = g.flow[g.idx];
-      if (s.type === 'auto') { out = out.concat(s.lines); g.idx++; continue; }
+      // unless の話題をもう聞いていたら、その地の文は出さない（話の順番が変わっても矛盾しないように）
+      if (s.type === 'auto') { out = out.concat(s.lines.filter(function (l) { return !(l.unless && g.st.seen[l.unless]); })); g.idx++; continue; }
+      if (s.type === 'say' && s.topic && g.st.seen[s.topic]) { g.idx++; continue; } // もう聞いた話なら、声かけを飛ばす
       if (s.type === 'say' && opts.ai) return { lines: out, say: s, sayText: (g.bridge && g.bridge[g.idx]) || s.text };
       if (s.type === 'say') {
         out.push(L('me', s.text));
@@ -151,11 +153,18 @@ var Story = (function () {
     st.turns++;
     if (res.bridge && g.bridgeFor >= 0) { g.bridge = g.bridge || {}; g.bridge[g.bridgeFor] = res.bridge; }
     st.trust = Math.max(0, Math.min(5, st.trust + (res.trust_change || 0)));
-    (res.lines || []).forEach(function (l) { out.push(L('p', l.text, l.face)); });
-    (res.revealed || []).forEach(function (id) {
+    var fresh = false, revealed = (res.revealed || []).slice();
+    // AIが話したのに「話した」と記録し忘れたときの保険：今聞き出したい話題を、プレイヤーがはっきり聞いていれば記録する
+    if (!isSay && s && s.type === 'ask') s.expect.forEach(function (id) {
       var tp = topicById(g, id);
-      if (!st.seen[id] && canReveal(g, tp)) { st.seen[id] = true; if (tp.clue && st.clues.indexOf(tp.clue) < 0) { st.clues.push(tp.clue); ev.clue = tp.clue; } }
+      if (tp && !st.seen[id] && revealed.indexOf(id) < 0 && keyMatch(text, tp.keys) && canReveal(g, tp)) revealed.push(id);
     });
+    revealed.forEach(function (id) {
+      var tp = topicById(g, id);
+      if (!st.seen[id] && canReveal(g, tp)) { st.seen[id] = true; fresh = true; if (tp.clue && st.clues.indexOf(tp.clue) < 0) { st.clues.push(tp.clue); ev.clue = tp.clue; } }
+    });
+    // 新しい手がかりを話していないのに赤字（【】）になっていたら、ただの言葉にもどす
+    (res.lines || []).forEach(function (l) { out.push(L('p', fresh ? l.text : String(l.text).replace(/[【】]/g, ''), l.face)); });
     // 怒りメーター（古いサーバーで anger_change がないときは、信頼の下がり方から決める）
     var da = typeof res.anger_change === 'number' ? res.anger_change : Math.max(0, -(res.trust_change || 0));
     out = out.concat(Engine.changeAnger(g.p, st, da));
@@ -167,6 +176,8 @@ var Story = (function () {
     else if (s.type === 'truth') {
       if (res.truth !== 'correct' && keyMatch(text, g.p.truth.groups)) { res.truth = 'correct'; out = g.p.truth.success.slice(0, 1); }
       if (res.truth === 'correct') {
+        // 告白は台本の言葉で語るので、AIの返事は最初の「図星の一言」だけにする（同じ告白が2回にならないように）
+        out = out.slice(0, 1).map(function (l) { return L('p', String(l.text).replace(/[【】]/g, ''), l.face); });
         ok = true; st.phase = 'counsel';
         out = out.concat(g.p.truth.success.slice(1));
         out.push(L('nurse', '真実にたどりついた！ さいごに、どんな言葉で背中を押してあげる？'));

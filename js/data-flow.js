@@ -14,11 +14,11 @@ var FLOWS = {
     ] },
     { type: 'ask', expect: ['symptom'], prompt: 'まずは、どんなふうに困っているのか聞いてみよう。',
       hint: '「どうしましたか？」「体のことを教えて」など、悩みそのものを聞いてみて！', example: 'どうされましたか？ 体のことを教えてください。' },
-    { type: 'say', text: 'ごはんは、ちゃんと食べられていますか？' },
+    { type: 'say', topic: 'food', text: 'ごはんは、ちゃんと食べられていますか？' },
     { type: 'ask', expect: ['when'], prompt: '食事は足りているのに小さくなる…。「いつから」なのかが気になる。',
       hint: '「いつから小さくなったの？」と聞いてみて！', example: 'いつ頃から小さくなり始めたんですか？' },
-    { type: 'auto', lines: [{ who: 'narr', text: '（ひと月前に何かあったようだ。でも、言いかけてやめてしまった…）' }] },
-    { type: 'say', text: '夜はよく眠れていますか？' },
+    { type: 'auto', lines: [{ who: 'narr', unless: 'night', text: '（ひと月前に何かあったようだ。でも、言いかけてやめてしまった…）' }] },
+    { type: 'say', topic: 'sleep', text: '夜はよく眠れていますか？' },
     { type: 'say', text: '毎晩だと大変ですね。無理しないでくださいね。' },
     { type: 'ask', expect: ['night'], prompt: '毎晩、朝方まで出かけている…。どこへ行っているんだろう？',
       hint: '「夜はどこに出かけているの？」と聞いてみて！', example: '夜は、どこに出かけているんですか？' },
@@ -44,11 +44,11 @@ var FLOWS = {
     ] },
     { type: 'ask', expect: ['symptom'], prompt: '「星の歌」とはなんだろう？ 悩みをくわしく聞いてみよう。',
       hint: '「星の歌ってなに？」「どうしましたか？」と聞いてみて！', example: '星の歌のこと、くわしく教えてください。' },
-    { type: 'say', text: '耳の検査では、どこか悪いところはありましたか？' },
+    { type: 'say', topic: 'ear', text: '耳の検査では、どこか悪いところはありましたか？' },
     { type: 'ask', expect: ['when'], prompt: '体には異常がない…。いつから聞こえないのか聞いてみよう。',
       hint: '「いつから聞こえないの？」と聞いてみて！', example: 'いつ頃から、聞こえなくなったんですか？' },
     { type: 'auto', lines: [
-      { who: 'narr', text: '（商業区の話を、あわててごまかした…）' }
+      { who: 'narr', unless: 'town', text: '（商業区の話を、あわててごまかした…）' }
     ] },
     { type: 'say', text: '歌い手として、つらかったですね。ゆっくりで大丈夫ですよ。' },
     { type: 'ask', expect: ['town'], prompt: 'カルテには「地球人の花屋の領収書」…。花や商業区のことを聞いてみよう。',
@@ -85,7 +85,7 @@ var FLOWS = {
       hint: '「喉の調子はどうですか？」と聞いてみて！', example: '喉の調子は、いかがですか？' },
     { type: 'ask', expect: ['fire1'], prompt: '喉をかばっている…？ 竜星人の誇りといえば、炎だ。',
       hint: '「今も火は吹けますか？」と聞いてみて！', example: '今も、火は吹けますか？' },
-    { type: 'say', text: 'お孫さんのリノくんのこと、教えてください。' },
+    { type: 'say', topic: 'grandson', text: 'お孫さんのリノくんのこと、教えてください。' },
     { type: 'ask', expect: ['festival'], prompt: '付き添いのリノは「祭りでおじいちゃんの火を見る」と言っていた…。',
       hint: '「お祭りの約束ってなんですか？」と聞いてみて！', example: 'お祭りで、リノくんと何か約束をしたんですか？' },
     { type: 'auto', lines: [

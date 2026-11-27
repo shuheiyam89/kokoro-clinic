@@ -43,7 +43,9 @@ var Engine = (function () {
   // 怒りを増減する。満タンになったら帰るセリフを返す
   function changeAnger(p, st, d) {
     if (st.phase === 'left') return [];
-    st.anger = Math.max(0, Math.min(MAX_ANGER, (st.anger || 0) + d));
+    // 真実を打ち明けたあと（背中を押す場面）は、心をひらいているので怒って帰ることはしない
+    var cap = st.phase === 'counsel' ? MAX_ANGER - 1 : MAX_ANGER;
+    st.anger = Math.max(0, Math.min(cap, (st.anger || 0) + d));
     return st.anger >= MAX_ANGER ? leaveLines(p, st) : [];
   }
   function leaveLines(p, st) {
