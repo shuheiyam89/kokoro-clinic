@@ -36,9 +36,10 @@
   function sizeCanvas(cv) {
     var dpr = window.devicePixelRatio || 1;
     var cssW = cv.parentNode.clientWidth || 360;
-    var k = Math.max(1, Math.round(cssW * dpr / Pixel.W));
-    if (cv.width !== Pixel.W * k) { cv.width = Pixel.W * k; cv.height = Pixel.H * k; }
-    var c = cv.getContext('2d'); c.setTransform(k, 0, 0, k, 0, 0); c.imageSmoothingEnabled = false;
+    var k = Math.max(1, Math.min(4, cssW * dpr / Pixel.W));
+    var cw = Math.round(Pixel.W * k), ch = Math.round(Pixel.H * k);
+    if (cv.width !== cw) { cv.width = cw; cv.height = ch; }
+    var c = cv.getContext('2d'); c.setTransform(cw / Pixel.W, 0, 0, ch / Pixel.H, 0, 0);
     return c;
   }
   var ctxScene, ctxTitle, ctxOp;
@@ -155,12 +156,12 @@
   }
   function shareImage(p, sc, cb) {
     var W = 1200, H = 630, c = document.createElement('canvas'); c.width = W; c.height = H;
-    var x = c.getContext('2d'), sc2 = document.createElement('canvas'); sc2.width = Pixel.W; sc2.height = Pixel.H;
-    var s2 = sc2.getContext('2d'); s2.imageSmoothingEnabled = false;
+    var x = c.getContext('2d'), sc2 = document.createElement('canvas'); sc2.width = Pixel.W * 4; sc2.height = Pixel.H * 4;
+    var s2 = sc2.getContext('2d'); s2.setTransform(4, 0, 0, 4, 0, 0);
     var cg = sc.route.key === 'best' ? 'end_' + p.id : null;
     Pixel.render(s2, { sprite: p.sprite, expr: 'happy', t: 0, alpha: 1, night: (p.night || p.id === 'gald'), cg: cg, cgT0: -1e9 });
-    x.imageSmoothingEnabled = false;
-    x.drawImage(sc2, 0, 30, 320, 168, 0, 0, W, 630);
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(sc2, 0, 120, 1280, 672, 0, 0, W, 630);
     var gr = x.createLinearGradient(0, 330, 0, H);
     gr.addColorStop(0, 'rgba(26,20,52,0)'); gr.addColorStop(0.35, 'rgba(26,20,52,.82)'); gr.addColorStop(1, 'rgba(26,20,52,.95)');
     x.fillStyle = gr; x.fillRect(0, 330, W, H - 330);

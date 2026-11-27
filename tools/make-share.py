@@ -3,11 +3,16 @@ import os
 from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, 'img')
-K = 4                       # 300x158 で組んで4倍（ドットをくっきり）
-room = Image.open(os.path.join(IMG, 'room.png')).convert('RGBA')
+K = 4                       # 300x158（ゲーム座標）で組んで4倍
+S = 3
+def L(name):
+    # 高画質の絵（WebP, S倍）をゲーム座標の大きさにして読む
+    im = Image.open(os.path.join(IMG, name + '.webp')).convert('RGBA')
+    return im.resize((round(im.width / S), round(im.height / S)), Image.LANCZOS)
+room = L('room')
 base = room.crop((10, 52, 310, 210))
 def put(name, x, bottom, scale):
-    s = Image.open(os.path.join(IMG, name + '.png')).convert('RGBA')
+    s = L(name)
     s = s.convert('RGBa').resize((round(s.width * scale), round(s.height * scale)), Image.BOX).convert('RGBA')
     a = s.getchannel('A').point(lambda v: 255 if v >= 110 else 0); s.putalpha(a)
     base.alpha_composite(s, (x - s.width // 2, bottom - s.height))

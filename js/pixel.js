@@ -1,22 +1,26 @@
 // 画面の描画。絵は img/ のドット絵（ChatGPTで作った絵を tools/make-art.py で 320x240 用に整えたもの）
 var Pixel = (function () {
   var W = 320, H = 240;
+  var S = 3; // 絵は S 倍の高画質（tools/make-art.py と同じ）。なめらかに縮めて描く
   var V = (document.currentScript && (document.currentScript.src.match(/\?v=\w+/) || [''])[0]) || '';
   var FACES = ['normal', 'happy', 'sad', 'surprise', 'angry', 'cry'];
   // sprite名 → 画像の名前・座ったときの下端(y)
   var CHARS = { slime: { name: 'pururu', bottom: 184 }, elf: { name: 'lumie', bottom: 170, front: true }, dragon: { name: 'gald', bottom: 188 },
-    fox: { name: 'konoha', bottom: 186 }, cat: { name: 'mii', bottom: 184 }, robot: { name: 'noa', bottom: 186 } };
+    fox: { name: 'konoha', bottom: 186 }, cat: { name: 'mii', bottom: 184 }, robot: { name: 'noa', bottom: 186, noBlink: true } };
   var img = {};
   function load(key) {
     if (img[key]) return img[key];
-    var i = new Image(); i.src = 'img/' + key + '.png' + V; img[key] = i; return i;
+    var i = new Image();
+    i.onload = function () { i.lw = i.naturalWidth / S; i.lh = i.naturalHeight / S; }; // ゲーム座標（320x240）での大きさ
+    i.src = 'img/' + key + '.webp' + V; img[key] = i; return i;
   }
-  function ready(i) { return i && i.complete && i.naturalWidth > 0; }
+  function ready(i) { if (i && i.complete && i.naturalWidth > 0) { if (!i.lw) { i.lw = i.naturalWidth / S; i.lh = i.naturalHeight / S; } return true; } return false; }
+  function smooth(c) { c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; }
   // 先に読みこんでおく
   ['room', 'room_night', 'room_front', 'room_night_front', 'space', 'space_tile', 'logo'].forEach(load);
   var BLINK = { normal: 1, sad: 1, surprise: 1 };
   Object.keys(CHARS).forEach(function (k) {
-    FACES.forEach(function (f) { load(CHARS[k].name + '_' + f); if (BLINK[f]) load(CHARS[k].name + '_' + f + '_blink'); });
+    FACES.forEach(function (f) { load(CHARS[k].name + '_' + f); if (BLINK[f] && !CHARS[k].noBlink) load(CHARS[k].name + '_' + f + '_blink'); });
   });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
   // 物語に出てくる人たち（となりに登場）と、エピソードの品物、結末の1枚絵
@@ -26,7 +30,7 @@ var Pixel = (function () {
   ['bread', 'comm', 'flower', 'drawing', 'photo', 'inari', 'misanga', 'letter', 'spanner', 'musicbox'].forEach(function (k) { load('item_' + k); });
   ['end_pururu', 'end_lumie', 'end_gald', 'end_konoha', 'end_mii', 'end_noa'].forEach(load);
 
-  function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, Math.round(x), Math.round(y)); return i; }
+  function draw(c, key, x, y) { var i = load(key); if (ready(i)) c.drawImage(i, x, y, i.lw, i.lh); return i; }
 
   // ---------- 反応エフェクト ----------
   var ICONS = {
@@ -119,6 +123,7 @@ var Pixel = (function () {
   }
 
   function render(c, st) {
+    smooth(c);
     var night = !!st.night;
     c.fillStyle = '#e9e4fb'; c.fillRect(0, 0, W, H);
     draw(c, night ? 'room_night' : 'room', 0, 0);
@@ -129,21 +134,21 @@ var Pixel = (function () {
       var i = load(ch.name + '_' + face);
       if (!ready(i)) i = load(ch.name + '_normal');
       // まばたき（閉じ目の絵がある表情だけ）
-      if (st.blink && BLINK[face]) { var bi = load(ch.name + '_' + face + '_blink'); if (ready(bi)) i = bi; }
+      if (st.blink && BLINK[face] && !ch.noBlink) { var bi = load(ch.name + '_' + face + '_blink'); if (ready(bi)) i = bi; }
       if (ready(i)) {
         var t = st.t || 0;
         // 話している間は小さくはずみ、ふだんはゆっくり息をする
         var bob = st.talk ? ((t / 140) | 0) % 2 : (((t / 1100) | 0) % 2);
-        var top = ch.bottom - i.height + bob;
+        var top = ch.bottom - i.lh + bob;
         c.save();
         c.globalAlpha = st.alpha != null ? st.alpha : 1;
         var cx = st.companion ? 128 : 160; // となりに誰かいるときは、少し左へ
-        c.drawImage(i, Math.round(cx - i.width / 2) + (st.fx ? shakeX(performance.now()) : 0), Math.round(top));
+        c.drawImage(i, cx - i.lw / 2 + (st.fx ? shakeX(performance.now()) : 0), top, i.lw, i.lh);
         c.restore();
         if (ch.front) draw(c, night ? 'room_night_front' : 'room_front', 0, 0);
-        smoke(c, st, top, i.height);
+        smoke(c, st, top, i.lh);
         if (st.companion) drawCompanion(c, st);
-        if (st.fx) drawFx(c, cx, top, i.width);
+        if (st.fx) drawFx(c, cx, top, i.lw);
       }
     }
     if (st.item) drawItem(c, st);
@@ -157,7 +162,7 @@ var Pixel = (function () {
     if (!ready(i)) return;
     var t = st.t || 0, bob = st.companion.talk ? ((t / 140) | 0) % 2 : (((t / 1300) | 0) % 2);
     var a = Math.min(1, (performance.now() - (st.companion.t0 || 0)) / 400);
-    c.save(); c.globalAlpha = a * (cp.alpha || 1); c.drawImage(i, Math.round(cp.x - i.width / 2), Math.round(cp.bottom - i.height + bob)); c.restore();
+    c.save(); c.globalAlpha = a * (cp.alpha || 1); c.drawImage(i, cp.x - i.lw / 2, cp.bottom - i.lh + bob, i.lw, i.lh); c.restore();
   }
   // エピソードの品物を大きく見せる
   function drawItem(c, st) {
@@ -165,8 +170,8 @@ var Pixel = (function () {
     var e = performance.now() - (st.itemT0 || 0), a = Math.min(1, e / 300), k = 2;
     c.save(); c.globalAlpha = 0.45 * a; c.fillStyle = '#1a1640'; c.fillRect(0, 0, W, H);
     c.globalAlpha = a;
-    var w = i.width * k, h = i.height * k, x = 160 - w / 2, y = 108 - h / 2 + Math.sin(e / 500) * 2 - (1 - a) * 10;
-    c.imageSmoothingEnabled = false; c.drawImage(i, Math.round(x), Math.round(y), w, h);
+    var w = i.lw * k, h = i.lh * k, x = 160 - w / 2, y = 108 - h / 2 + Math.sin(e / 500) * 2 - (1 - a) * 10;
+    smooth(c); c.drawImage(i, x, y, w, h);
     for (var n = 0; n < 4; n++) {
       var ph = (e / 900 + n / 4) % 1, ang = n * 1.7;
       c.globalAlpha = a * (1 - Math.abs(ph - 0.5) * 2);
@@ -177,7 +182,7 @@ var Pixel = (function () {
   // 結末の1枚絵（ふわっと出す）
   function drawCg(c, st) {
     var i = load(st.cg); if (!ready(i)) return;
-    c.save(); c.globalAlpha = Math.min(1, (performance.now() - (st.cgT0 || 0)) / 900); c.drawImage(i, 0, 0); c.restore();
+    c.save(); c.globalAlpha = Math.min(1, (performance.now() - (st.cgT0 || 0)) / 900); c.drawImage(i, 0, 0, W, H); c.restore();
   }
 
   // 予約リスト用の顔の絵。locked なら黒いシルエット。絵がまだ読みこまれていなければ false
@@ -186,31 +191,33 @@ var Pixel = (function () {
   function portrait(c, sprite, locked) {
     var ch = CHARS[sprite]; if (!ch) return true;
     var i = load(ch.name + '_normal'); if (!ready(i)) return false;
-    var side = Math.min(i.width, i.height), size = c.canvas.width;
+    var side = Math.min(i.naturalWidth, i.naturalHeight), size = c.canvas.width;
     var bg = PORTRAIT_BG[sprite] || ['#eee', '#ddd'];
     c.fillStyle = locked ? '#4a3d66' : bg[0]; c.fillRect(0, 0, size, size);
     c.fillStyle = locked ? '#3a2f55' : bg[1];
     for (var y = 0; y < size; y += 8) for (var x = (y / 8) % 2 ? 4 : 0; x < size; x += 8) c.fillRect(x, y, 4, 4);
     var tmp = document.createElement('canvas'); tmp.width = side; tmp.height = side;
     var tc = tmp.getContext('2d');
-    tc.drawImage(i, Math.round((i.width - side) / 2), 0, side, side, 0, 0, side, side);
+    tc.drawImage(i, Math.round((i.naturalWidth - side) / 2), 0, side, side, 0, 0, side, side);
     if (locked) { tc.globalCompositeOperation = 'source-atop'; tc.fillStyle = '#1b1530'; tc.fillRect(0, 0, side, side); }
-    c.imageSmoothingEnabled = false;
+    smooth(c);
     c.drawImage(tmp, 0, 0, side, side, 0, 0, size, size);
     return true;
   }
 
   // 看護師ミケの顔（56x56）。mood = normal / happy / worry
   function nurse(c, t, mood) {
-    c.clearRect(0, 0, 56, 56);
-    c.fillStyle = '#e9e4fb'; c.fillRect(0, 0, 56, 56);
-    draw(c, 'nurse_icon_' + (mood || 'normal'), 0, 0);
+    smooth(c);
+    var n = c.canvas.width, i = load('nurse_icon_' + (mood || 'normal'));
+    c.fillStyle = '#e9e4fb'; c.fillRect(0, 0, n, n);
+    if (ready(i)) c.drawImage(i, 0, 0, n, n);
   }
 
   // オープニング：宇宙とステーション
   var STARS = [];
   (function () { var s = 7; function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; } for (var i = 0; i < 40; i++) STARS.push([rnd() * W, rnd() * H, rnd()]); })();
   function renderSpace(c, t, zoom) {
+    smooth(c);
     c.fillStyle = '#0b0d2a'; c.fillRect(0, 0, W, H);
     var i = load('space');
     if (ready(i)) {
@@ -220,9 +227,9 @@ var Pixel = (function () {
       var tile = load('space_tile'), th = 40;
       if (ready(tile)) for (var ty = -12; ty <= 14; ty++) for (var tx = -2; tx <= 2; tx++) {
         c.save(); c.translate(tx * W + (tx & 1 ? W : 0), ty * th + (ty & 1 ? th : 0));
-        c.scale(tx & 1 ? -1 : 1, ty & 1 ? -1 : 1); c.drawImage(tile, 0, 0); c.restore();
+        c.scale(tx & 1 ? -1 : 1, ty & 1 ? -1 : 1); c.drawImage(tile, 0, 0, W, th); c.restore();
       }
-      c.drawImage(i, 0, 0);
+      c.drawImage(i, 0, 0, W, H);
       c.restore();
     }
     // またたく星
