@@ -152,6 +152,9 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 #scr-opening { background: #0b0d2a; }
 #cv-op { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
 .skip { position: absolute; right: 10px; top: max(10px, env(safe-area-inset-top)); z-index: 2; font: inherit; font-size: 14px; background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 6px 14px; }
+.sound-hint { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 99px; background: rgba(11,13,42,.7); color: #f4f0ff; font-size: 14px; white-space: nowrap; animation: hintBlink 1.6s infinite; pointer-events: none; }
+.sound-hint.off { display: none; }
+@keyframes hintBlink { 50% { opacity: .45; } }
 .op-box { position: absolute; left: 12px; right: 12px; bottom: calc(24px + env(safe-area-inset-bottom)); min-height: 120px; background: rgba(11,13,42,.78); border: 2px solid #8f84d6; border-radius: 14px; padding: 16px 16px 22px; }
 .op-box p { margin: 0; font-size: 18px; line-height: 1.75; color: #f4f0ff; white-space: pre-wrap; }
 .op-box.nurse { border-color: #f39ab0; }

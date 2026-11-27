@@ -39,11 +39,11 @@ var BGM = (function () {
     g.gain.setValueAtTime(peak, t + a + hold);
     g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + r);
   }
-  function pad(note, t, dur) {
+  function pad(note, t, dur, fast) {
     [[0, 'triangle', 0.028], [7, 'sine', 0.03]].forEach(function (v) {
       var o = ctx.createOscillator(), g = ctx.createGain();
       o.type = v[1]; o.frequency.value = mtof(note); o.detune.value = v[0];
-      env(g, t, 1.6, v[2], Math.max(0.1, dur - 2.4), 2.2);
+      env(g, t, fast ? 0.12 : 1.6, v[2], Math.max(0.1, dur - 2.4), 2.2);
       o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 2.5);
     });
   }
@@ -68,7 +68,7 @@ var BGM = (function () {
     while (nextTime < ctx.currentTime + 0.6) {
       var bar = Math.floor(step / 16) % 4, b = step % 16, t = nextTime;
       if (b === 0) {
-        CHORDS[bar].forEach(function (n) { pad(n, t, BEAT * 8); });
+        CHORDS[bar].forEach(function (n) { pad(n, t, BEAT * 8, step === 0); }); // 最初の和音はすぐ鳴らす
         bass(CHORDS[bar][0], t, BEAT * 8);
       }
       // 2周目以降、たまにメロディを休ませて変化をつける
@@ -82,12 +82,28 @@ var BGM = (function () {
 
   function start() {
     if (!ctx && !init()) return;
-    if (ctx.state === 'suspended') ctx.resume();
-    if (timer) return;
-    nextTime = ctx.currentTime + 0.15;
+    if (ctx.state !== 'running') {
+      // 音の再生が許可されていない間は、予定だけ進めないようにして、許可された瞬間から鳴らす
+      ctx.resume().then(function () { if (!timer) begin(); });
+      return;
+    }
+    if (!timer) begin();
+  }
+  function begin() {
+    nextTime = ctx.currentTime + 0.03;
     timer = setInterval(tick, 120);
     tick();
   }
+  function running() { return !!(ctx && ctx.state === 'running' && timer); }
+  // ブラウザは、画面にふれるまで音を出させてくれない。最初にふれた瞬間（指が触れたとき）に鳴らす
+  function unlock() {
+    if (muted) return;
+    start();
+    if (running()) ['pointerdown', 'touchstart', 'touchend', 'keydown', 'click'].forEach(function (ev) { document.removeEventListener(ev, unlock, true); });
+  }
+  ['pointerdown', 'touchstart', 'touchend', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unlock, true); });
+  // 許可されている環境（PCで何度も遊んでいるときなど）では、ふれる前から流す
+  if (!muted) setTimeout(start, 0);
   function setMuted(m) {
     muted = m;
     try { localStorage.setItem(KEY, m ? 'off' : 'on'); } catch (e) {}
@@ -99,5 +115,5 @@ var BGM = (function () {
     if (document.hidden) ctx.suspend(); else if (timer) { ctx.resume(); nextTime = Math.max(nextTime, ctx.currentTime + 0.1); }
   });
 
-  return { start: start, setMuted: setMuted, isMuted: function () { return muted; } };
+  return { start: start, setMuted: setMuted, isMuted: function () { return muted; }, running: running };
 })();
