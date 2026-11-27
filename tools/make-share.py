@@ -24,9 +24,9 @@ def put(name, x, bottom, scale=1.0):
 
 
 # ソファに3人（ゲームと同じ座る高さ。ゲーム座標×S）
-put('pururu_happy', 98 * S, 198 * S, 0.58)
-put('lumie_happy', 160 * S, 200 * S, 0.58)
-put('gald_happy', 224 * S, 199 * S, 0.58)
+put('pururu_happy', 98 * S, 184 * S, 0.58)
+put('lumie_happy', 160 * S, 186 * S, 0.58)
+put('gald_happy', 224 * S, 185 * S, 0.58)
 big = base.resize((1200, 630), Image.LANCZOS)
 logo = Image.open(os.path.join(IMG, 'logo.png')).convert('RGBA')
 logo = logo.resize((520, round(logo.height * 520 / logo.width)), Image.LANCZOS)

@@ -5,8 +5,9 @@ var Pixel = (function () {
   var V = (document.currentScript && (document.currentScript.src.match(/\?v=\w+/) || [''])[0]) || '';
   var FACES = ['normal', 'happy', 'sad', 'surprise', 'angry', 'cry'];
   // sprite名 → 画像の名前・座ったときの下端(y)
-  var CHARS = { slime: { name: 'pururu', bottom: 196 }, elf: { name: 'lumie', bottom: 200 }, dragon: { name: 'gald', bottom: 198, noBlink: { surprise: 1 } },
-    fox: { name: 'konoha', bottom: 198 }, cat: { name: 'mii', bottom: 198 }, robot: { name: 'noa', bottom: 198, noBlink: true } };
+  // bottom はソファの座面（ゲーム座標 y≈180）におしり・足先が来る高さ
+  var CHARS = { slime: { name: 'pururu', bottom: 180 }, elf: { name: 'lumie', bottom: 184 }, dragon: { name: 'gald', bottom: 182, noBlink: { surprise: 1 } },
+    fox: { name: 'konoha', bottom: 186 }, cat: { name: 'mii', bottom: 186 }, robot: { name: 'noa', bottom: 182, noBlink: true } };
   var img = {};
   function load(key) {
     if (img[key]) return img[key];
@@ -26,7 +27,7 @@ var Pixel = (function () {
   });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
   // 物語に出てくる人たち（となりに登場）と、エピソードの品物、結末の1枚絵
-  var COMP = { moti: { x: 214, bottom: 192, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 236, bottom: 222, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 230, bottom: 220, faces: ['happy', 'surprise', 'sad'] },
+  var COMP = { moti: { x: 214, bottom: 180, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 236, bottom: 222, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 230, bottom: 220, faces: ['happy', 'surprise', 'sad'] },
     mother: { x: 236, bottom: 222, faces: ['smile'] }, pipi: { x: 232, bottom: 222, faces: ['smile'] }, harumo: { x: 236, bottom: 222, faces: ['smile'], alpha: 0.85 } };
   Object.keys(COMP).forEach(function (k) { COMP[k].faces.forEach(function (f) { load(k + '_' + f); }); });
   ['bread', 'comm', 'flower', 'drawing', 'photo', 'inari', 'misanga', 'letter', 'spanner', 'musicbox'].forEach(function (k) { load('item_' + k); });
