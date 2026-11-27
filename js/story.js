@@ -2,7 +2,19 @@
 var Story = (function () {
   function L(who, text, face) { return { who: who, text: text, face: face }; }
 
-  function start(p) { return { p: p, flow: FLOWS[p.id], st: Engine.newState(p), idx: 0, miss: 0 }; }
+  function start(p) { return { p: p, flow: FLOWS[p.id], st: Engine.newState(p), idx: 0, miss: 0, epDone: {} }; }
+
+  // 質問しだいで起きる「エピソード」。聞き出した話題にエピソードがあれば、その場面を流す
+  function episodes(g) {
+    var out = [];
+    g.p.topics.forEach(function (tp) {
+      if (!tp.episode || !g.st.seen[tp.id] || g.epDone[tp.id]) return;
+      g.epDone[tp.id] = true;
+      out.push({ who: 'narr', text: '✦ エピソード「' + tp.episode.title + '」', episode: tp.episode.title });
+      out = out.concat(tp.episode.scene);
+    });
+    return out;
+  }
   function current(g) { return g.flow[g.idx] || null; }
 
   // ask の前に、聞き出す話題に必要な信頼度を下回っていたら補う（行き詰まり防止）
@@ -25,7 +37,7 @@ var Story = (function () {
       if (s.type === 'say' && opts.ai) return { lines: out, say: s };
       if (s.type === 'say') {
         out.push(L('me', s.text));
-        out = out.concat(Engine.ask(g.p, g.st, s.text, { noHint: true }).lines);
+        out = out.concat(Engine.ask(g.p, g.st, s.text, { noHint: true }).lines).concat(episodes(g));
         g.idx++; continue;
       }
       if (s.type === 'ask' && seenAll(g, s)) { g.idx++; continue; } // もう聞き出していたら飛ばす
@@ -51,9 +63,11 @@ var Story = (function () {
   function answer(g, text) {
     var s = current(g);
     if (!s) return { lines: [], ev: {} };
-    var r = exec(g, s, text), out = r.lines.slice();
+    var r = exec(g, s, text), out = r.lines.slice(), ep = episodes(g);
+    out = out.concat(ep);
     if (r.ok) { g.idx++; return { lines: out, ev: r.ev, ok: true }; }
     if (g.st.phase === 'left') return { lines: out, ev: r.ev };
+    if (ep.length) { out.push(L('think', s.prompt)); return { lines: out, ev: r.ev }; } // 寄り道はミスに数えない
     g.miss++;
     if (g.miss === 2) {
       out.push(L('nurse', s.hint));
@@ -114,6 +128,7 @@ var Story = (function () {
     var da = typeof res.anger_change === 'number' ? res.anger_change : Math.max(0, -(res.trust_change || 0));
     out = out.concat(Engine.changeAnger(g.p, st, da));
     if (st.phase === 'left') return { lines: out, ev: ev };
+    var ep = episodes(g); out = out.concat(ep);
     if (isSay) { g.idx++; return { lines: out, ev: ev, ok: true }; }
     var ok = false;
     if (s.type === 'ask') ok = seenAll(g, s);
@@ -128,9 +143,10 @@ var Story = (function () {
       }
     } else if (s.type === 'counsel') {
       if (!res.counsel_ok && g.p.counsel.good.some(function (c) { return keyMatch(text, c.groups); })) res.counsel_ok = true;
-      if (res.counsel_ok) { ok = true; st.phase = 'done'; out = out.concat(g.p.ending); }
+      if (res.counsel_ok) { ok = true; st.phase = 'done'; out = out.concat(Engine.endingLines(g.p, st)); }
     }
     if (ok) { g.idx++; return { lines: out, ev: ev, ok: true }; }
+    if (ep.length) { out.push(L('think', s.prompt)); return { lines: out, ev: ev }; }
     g.miss++;
     if (g.miss === 2) { out.push(L('nurse', s.hint)); out.push(L('think', s.prompt)); }
     else if (g.miss >= 3) {
@@ -145,7 +161,7 @@ var Story = (function () {
   }
   // AIが使えないときの say（キーワードの返事）
   function localSay(g) {
-    var s = current(g), out = Engine.ask(g.p, g.st, s.text, { noHint: true }).lines;
+    var s = current(g), out = Engine.ask(g.p, g.st, s.text, { noHint: true }).lines.concat(episodes(g));
     g.idx++;
     return { lines: out, ok: true };
   }

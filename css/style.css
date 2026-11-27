@@ -72,7 +72,7 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .dialog.nurse .nametag { background: #f39ab0; }
 .dialog.narr .nametag { display: none; }
 .dialog.narr p { color: #6b5a7e; }
-#cv-nurse { display: none; float: left; width: 40px; height: 40px; margin: 0 10px 4px 0; border-radius: 8px; }
+#cv-nurse { display: none; float: left; width: 48px; height: 48px; image-rendering: pixelated; margin: 0 10px 4px 0; border-radius: 8px; }
 .dialog.nurse #cv-nurse { display: block; }
 #d-text { margin: 0; font-size: 17px; line-height: 1.65; white-space: pre-wrap; }
 .next { position: absolute; right: 12px; bottom: 6px; color: #d08a3a; animation: bob 1s infinite; display: none; }
@@ -154,9 +154,16 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .op-box { position: absolute; left: 12px; right: 12px; bottom: calc(24px + env(safe-area-inset-bottom)); min-height: 120px; background: rgba(11,13,42,.78); border: 2px solid #8f84d6; border-radius: 14px; padding: 16px 16px 22px; }
 .op-box p { margin: 0; font-size: 18px; line-height: 1.75; color: #f4f0ff; white-space: pre-wrap; }
 .op-box.nurse { border-color: #f39ab0; }
-.op-box.nurse p::before { content: '助手ミケ：'; color: #f9b8c8; }
+.op-box.nurse p::before { content: '看護師ミケ：'; color: #f9b8c8; }
+#cv-op-nurse { display: none; float: left; width: 56px; height: 56px; margin: 0 12px 4px 0; border-radius: 10px; }
+.op-box.nurse #cv-op-nurse { display: block; }
 .op-next { position: absolute; right: 14px; bottom: 6px; color: #ffe0a6; animation: bob 1s infinite; }
 /* スキップは右下 */
 .skip { top: auto; bottom: calc(14px + env(safe-area-inset-bottom)); right: 12px; }
 .op-box { bottom: calc(64px + env(safe-area-inset-bottom)); }
 #modal-body .result.gameover h3 { color: #e0413a; letter-spacing: 4px; font-size: 26px; }
+/* 大事なフレーズは赤字 */
+em.key { font-style: normal; color: #d8322a; font-weight: bold; }
+.dialog.narr em.key { color: #d8322a; }
+.result .route { color: #7a4a2a; background: #fff1d6; border-radius: 10px; padding: 8px; line-height: 1.6; }
+.result .route small { color: #9a7a5a; }

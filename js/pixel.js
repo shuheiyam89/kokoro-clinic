@@ -290,19 +290,14 @@ var Pixel = (function () {
     if (st.night) { c.save(); c.globalAlpha = 0.14; c.fillStyle = '#2b2f8f'; c.fillRect(0, 0, W, H); c.restore(); }
   }
 
-  // 助手ミケ（触角つきの猫型宇宙人）24x24
+  // 助手ミケ（茶色のポニーテールの看護師さん）32x32。絵は js/nurse-art.js
   function nurse(c, t) {
-    R(c, 0, 0, 24, 24, '#e9e4fb');
-    var ab = ((t / 400) | 0) % 2;
-    R(c, 9, 2, 1, 4, '#3f8a3a'); R(c, 14, 2, 1, 4, '#3f8a3a'); E(c, 9, 1 + ab, 1, 1, '#6fe08a'); E(c, 14, 1 + ab, 1, 1, '#6fe08a');
-    poly(c, [[3, 11], [5, 2], [11, 7]], '#f0a35c'); poly(c, [[21, 11], [19, 2], [13, 7]], '#f0a35c');
-    P(c, 5, 6, '#f7c2c7'); P(c, 18, 6, '#f7c2c7');
-    E(c, 12, 15, 8, 7, '#ffe2c6'); E(c, 12, 9, 8, 3, '#f0a35c'); R(c, 4, 9, 3, 7, '#f0a35c'); R(c, 17, 9, 3, 7, '#f0a35c');
-    var bl = (t % 2600) < 140;
-    if (bl) { R(c, 7, 15, 3, 1, LINE); R(c, 14, 15, 3, 1, LINE); }
-    else { R(c, 7, 13, 3, 3, '#2fb8a0'); R(c, 14, 13, 3, 3, '#2fb8a0'); R(c, 7, 12, 3, 1, LINE); R(c, 14, 12, 3, 1, LINE); P(c, 7, 13, '#ffffff'); P(c, 14, 13, '#ffffff'); }
-    P(c, 11, 18, '#c26a5a'); P(c, 12, 18, '#c26a5a');
-    R(c, 5, 17, 2, 1, '#f4a3a8'); R(c, 17, 17, 2, 1, '#f4a3a8');
+    R(c, 0, 0, 32, 32, '#e9e4fb');
+    var g = (t % 3200) < 160 ? NURSE_ART.blink : NURSE_ART.open;
+    for (var y = 0; y < g.length; y++) for (var x = 0; x < 32; x++) {
+      var ch = g[y].charAt(x);
+      if (ch !== '.') P(c, x, y, NURSE_ART.pal[ch]);
+    }
   }
 
   // ---------- オープニング：宇宙とステーション ----------

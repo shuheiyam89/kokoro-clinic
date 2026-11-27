@@ -68,5 +68,31 @@ P.forEach(function (p) {
     if (!ok) fails++;
   });
 });
+// 寄り道の質問でエピソードが起き、結末が「best」に変わるか
+var EPQ = { pururu: ['お仕事は何をしているの？', '通信機が鳴ってるみたいだけど？'],
+  lumie: ['里に言い伝えはありますか？', 'その手帳の青い押し花はなんですか？'],
+  gald: ['懐の紙はなんですか？', '奥さんはどんな方でしたか？'] };
+P.forEach(function (p) {
+  var g = S.start(p), r = S.run(g), left = EPQ[p.id].slice(), shown = 0, steps = 0, missed = false;
+  while (r.waiting && steps++ < 200) {
+    var a, adv = false;
+    for (var i = 0; i < left.length && !adv; i++) {
+      if (r.waiting.type !== 'ask') break;
+      a = S.answer(g, left[i]);
+      if (a.ok) adv = true;
+      var ep = a.lines.filter(function (l) { return l.episode; }).length;
+      if (ep) { shown += ep; left.splice(i, 1); i--; if (g.miss) missed = true; }
+    }
+    if (!adv) { a = S.answer(g, r.waiting.example); if (!a.ok) break; }
+    r = S.run(g);
+  }
+  var rt = E.route(p, g.st), endTxt = E.endingLines(p, g.st).length;
+  var ok = g.st.phase === 'done' && rt.key === 'best' && shown === 2 && !missed && endTxt > p.ending.length;
+  console.log((ok ? 'OK  ' : 'NG  ') + 'エピソード ' + p.name + ' 発見' + shown + ' ルート=' + rt.key + '「' + rt.name + '」 残り:' + left.join(','));
+  if (!ok) fails++;
+  // 寄り道しなければ normal
+  var g2 = S.start(p), r2 = S.run(g2); while (r2.waiting) { S.answer(g2, r2.waiting.example); r2 = S.run(g2); }
+  if (E.route(p, g2.st).key !== 'normal') { console.log('NG  寄り道なしで normal にならない ' + p.name); fails++; }
+});
 console.log(fails ? fails + '件失敗' : 'すべて成功');
 process.exit(fails ? 1 : 0);

@@ -6,6 +6,7 @@
   function load() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || { cleared: {} }; } catch (e) { return { cleared: {} }; } }
   function store() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
   if (!save.cleared) save.cleared = {};
+  if (!save.stars) save.stars = {};
 
   // ---------- スマホの画面高さ（キーボード対応） ----------
   var app = $('app');
@@ -54,7 +55,8 @@
       if (scene.fade) { scene.alpha += scene.fade; if (scene.alpha >= 1) { scene.alpha = 1; scene.fade = 0; } if (scene.alpha <= 0) { scene.alpha = 0; scene.fade = 0; } }
       Pixel.render(ctxScene, scene);
       if (cvNurse.offsetParent) Pixel.nurse(cvNurse.getContext('2d'), ts);
-    } else if (active('scr-title')) {
+    }
+    var opN = $('cv-op-nurse'); if (opN && opN.offsetParent) Pixel.nurse(opN.getContext('2d'), ts); else if (active('scr-title')) {
       var p = PATIENTS[((ts / 3500) | 0) % PATIENTS.length];
       Pixel.render(ctxTitle, { sprite: p.sprite, expr: 'happy', t: ts, blink: scene.blink, scale: 1 });
     } else if (active('scr-opening')) {
@@ -98,7 +100,7 @@
       '<li><b>💭のところで、あなたが質問を入力</b>します。何を聞けばいいかは💭に書いてあります。自分の言葉でOK！</li>' +
       '<li>患者は何かを<b>隠しています</b>。📋カルテの記述や、話の中の言いよどみがヒントです。</li>' +
       '<li>さいごに、隠している真実を言いあて、背中を押す言葉をかけたらクリア！</li>' +
-      '<li>困ったら💡ヒント。3回うまくいかないと、助手のミケが手伝ってくれます。</li></ol>');
+      '<li>困ったら💡ヒント。3回うまくいかないと、看護師のミケが手伝ってくれます。</li><li>気になったことを自由に聞くと「エピソード」が起きて、結末が変わることも。</li><li>赤い字は大事な手がかり。怒りメーター💢が満タンになると、患者さんは帰ってしまいます。</li></ol>');
   };
 
   // ---------- オープニング ----------
@@ -156,7 +158,7 @@
         ? '<b>' + esc(p.name) + '</b>（' + esc(p.species) + '）<br>「' + esc(chief) + '」<br><span class="stars">' + '★'.repeat(p.difficulty) + '☆'.repeat(3 - p.difficulty) + '</span>'
         : '<b>？？？</b><br>前の患者の悩みを解決すると予約が入ります';
       li.appendChild(info);
-      if (save.cleared[p.id]) { var s = document.createElement('span'); s.className = 'stamp'; s.textContent = '解決'; li.appendChild(s); }
+      if (save.cleared[p.id]) { var s = document.createElement('span'); s.className = 'stamp'; s.textContent = '解決' + (save.stars[p.id] ? ' ' + '★'.repeat(save.stars[p.id]) : ''); li.appendChild(s); }
       if (open) li.onclick = function () { music(); startSession(p); };
       ul.appendChild(li);
     });
@@ -202,7 +204,7 @@
   function speak(text, kind) {
     var seq = ++talkSeq;
     var promise = AI.talk(Story.aiPayload(G, kind, text, history()));
-    play([{ who: 'me', text: text }], function () {
+    play([{ who: 'me', text: text, auto: kind !== 'say' }], function () {
       waitReply(promise, function (res) {
         if (seq !== talkSeq) return;
         var a;
@@ -290,24 +292,37 @@
     curLine = queue.shift();
     var who = curLine.who, st = Story.current(G), wt = st ? st.type : null;
     dlg.className = 'dialog ' + who;
-    $('d-name').textContent = who === 'p' ? P.name : who === 'nurse' ? '助手ミケ' : who === 'me' ? 'あなた'
+    $('d-name').textContent = who === 'p' ? P.name : who === 'nurse' ? '看護師ミケ' : who === 'me' ? 'あなた'
       : who === 'think' ? (wt === 'truth' ? '💭 真実は…？' : wt === 'counsel' ? '💭 どう声をかける？' : '💭 なにを聞こう？') : '';
     if (who === 'p') { if (curLine.face) scene.expr = curLine.face; syncStatus(); }
     log.push({ who: who, text: curLine.text });
-    var text = curLine.text, i = 0, el = $('d-text');
+    if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
+    var text = curLine.text, plain = text.replace(/[【】]/g, ''), i = 0, el = $('d-text');
     el.textContent = '';
     scene.talk = who === 'p';
     clearInterval(typing);
     typing = setInterval(function () {
-      i++; el.textContent = text.slice(0, i);
-      if (i >= text.length) finishTyping();
+      i++; el.innerHTML = rich(text, i);
+      if (i >= plain.length) finishTyping();
     }, 30);
+  }
+  // 【】でかこんだ大事なフレーズを赤字にする（n = 表示する文字数）
+  function rich(text, n) {
+    if (n == null) n = Infinity;
+    var html = '', red = false, count = 0;
+    for (var k = 0; k < text.length && count < n; k++) {
+      var ch = text.charAt(k);
+      if (ch === '【') { html += '<em class="key">'; red = true; continue; }
+      if (ch === '】') { if (red) html += '</em>'; red = false; continue; }
+      html += esc(ch); count++;
+    }
+    return red ? html + '</em>' : html;
   }
   // 文を出し終えたら、必ずタップを待つ（💭の入力待ちだけはそのまま入力へ）
   function finishTyping() {
     clearInterval(typing); typing = null; scene.talk = false;
-    $('d-text').textContent = curLine.text;
-    if (!queue.length && (curLine.who === 'think' || curLine.who === 'me')) { nextLine(); return; }
+    $('d-text').innerHTML = rich(curLine.text);
+    if (!queue.length && (curLine.who === 'think' || curLine.auto)) { nextLine(); return; }
     if (queue.length || onQueueEnd) $('dialog').classList.add('more');
     else nextLine();
   }
@@ -343,16 +358,23 @@
       openModal('<div class="result gameover"><h3>GAME OVER</h3><p class="big">💢 ' + esc(P.name) + 'は怒って帰ってしまった…</p><p>怒りメーターが満タンになってしまった。<br>相手が嫌がる言い方をしていなかったか、思い出してみよう。</p></div>', 'もう一度', function () { startSession(P); });
     }, 900);
   }
+  function routeHtml() {
+    var r = Engine.route(P, ST), stars = r.key === 'best' ? '★★★' : r.key === 'good' ? '★★☆' : '★☆☆';
+    var more = r.found < r.total ? '<br><small>ちがう質問をすると、べつの結末が見られるかも…</small>' : '<br><small>すべてのエピソードを見つけた！</small>';
+    return '<p class="route">' + stars + ' エンディング「' + esc(r.name) + '」<br>見つけたエピソード：' + r.found + ' / ' + r.total + more + '</p>';
+  }
   function finish() {
     setInput(null); $('inp').blur();
     if (P.id === 'lumie') scene.flower = true;
     scene.expr = 'happy';
-    save.cleared[P.id] = true; store();
+    save.cleared[P.id] = true;
+    var rk = { normal: 1, good: 2, best: 3 }[Engine.route(P, ST).key];
+    save.stars[P.id] = Math.max(save.stars[P.id] || 0, rk); store();
     var total = P.topics.filter(function (t) { return t.clue; }).length;
     setTimeout(function () {
       var next = PATIENTS.indexOf(P) + 1 < PATIENTS.length ? '<p>あたらしい予約が入りました！</p>' : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
       openModal('<div class="result"><h3>カウンセリング成功！</h3><p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
-        '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '<br>信頼度：<span style="color:#ff5a7e">' + '♥'.repeat(ST.trust) + '</span></p>' + next + '</div>',
+        routeHtml() + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '<br>信頼度：<span style="color:#ff5a7e">' + '♥'.repeat(ST.trust) + '</span></p>' + next + '</div>',
         '予約リストへ', function () { buildList(); show('scr-select'); });
     }, 1000);
   }
@@ -367,7 +389,7 @@
   $('btn-log').onclick = function () {
     var h = log.filter(function (l) { return l.who !== 'think'; }).map(function (l) {
       var name = l.who === 'me' ? 'あなた' : l.who === 'p' ? P.name : l.who === 'nurse' ? 'ミケ' : '';
-      return '<p class="' + l.who + '">' + (name ? '<b>' + esc(name) + '</b>：' : '') + esc(l.text) + '</p>';
+      return '<p class="' + l.who + '">' + (name ? '<b>' + esc(name) + '</b>：' : '') + rich(l.text) + '</p>';
     }).join('');
     openModal('<h3>💬 会話ログ</h3><div class="log">' + (h || '<p>まだ会話はありません</p>') + '</div>');
     setTimeout(function () { var b = $('modal-body'); b.scrollTop = b.scrollHeight; }, 0);

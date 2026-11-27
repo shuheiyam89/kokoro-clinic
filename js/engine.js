@@ -154,6 +154,21 @@ var Engine = (function () {
     return { lines: out, ev: ev, ok: false };
   }
 
+  // 見つけたエピソード（寄り道の話）の数で結末が変わる
+  function episodesOf(p) { return p.topics.filter(function (t) { return t.episode; }); }
+  function foundEpisodes(p, st) { return episodesOf(p).filter(function (t) { return st.seen[t.id]; }); }
+  function route(p, st) {
+    var n = foundEpisodes(p, st).length, all = episodesOf(p).length;
+    var key = n >= all && all ? 'best' : n > 0 ? 'good' : 'normal';
+    return { key: key, name: (p.routes || {})[key] || '', found: n, total: all };
+  }
+  function endingLines(p, st) {
+    var out = p.ending.slice();
+    foundEpisodes(p, st).forEach(function (t) { out = out.concat(t.episode.ending || []); });
+    if (route(p, st).key === 'best' && p.trueEnding) out = out.concat(p.trueEnding);
+    return out;
+  }
+
   // さいごの声かけ
   function counsel(p, st, input, opts) {
     opts = opts || {};
@@ -164,7 +179,7 @@ var Engine = (function () {
       var g = p.counsel.good[i];
       if (matchAll(t, g.groups)) {
         st.phase = 'done';
-        out = g.reply.concat(p.ending);
+        out = g.reply.concat(endingLines(p, st));
         return { lines: out, ok: true };
       }
     }
@@ -180,6 +195,6 @@ var Engine = (function () {
     return { lines: out, ok: false };
   }
 
-  return { norm: norm, newState: newState, ask: ask, diagnose: diagnose, counsel: counsel, changeAnger: changeAnger, MAX_TRUST: MAX_TRUST, MAX_ANGER: MAX_ANGER };
+  return { norm: norm, newState: newState, ask: ask, diagnose: diagnose, counsel: counsel, endingLines: endingLines, route: route, changeAnger: changeAnger, MAX_TRUST: MAX_TRUST, MAX_ANGER: MAX_ANGER };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
