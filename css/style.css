@@ -208,3 +208,9 @@ em.key { font-style: normal; color: #d8322a; font-weight: bold; }
 .share .btn { display: block; margin: 6px auto; width: 80%; text-decoration: none; box-sizing: border-box; }
 .fb-mail { text-align: center; font-size: 13px; color: #7a6a5a; margin: 10px 0 2px; line-height: 1.6; }
 .fb-mail a, #modal-body a[href^="mailto"] { color: #c94f7c; word-break: break-all; }
+
+/* 開放画面（課金ゲート。Play版だけ） */
+#patient-list li.locked.paid { opacity: .85; cursor: pointer; }
+#patient-list li.locked.paid .info { opacity: 1; color: #7a4a2a; }
+.result.paywall .pw-points { text-align: left; margin: 8px auto; padding-left: 1.2em; line-height: 1.7; max-width: 320px; }
+.result.paywall #pw-msg { color: #e0413a; font-size: 13px; min-height: 1em; }

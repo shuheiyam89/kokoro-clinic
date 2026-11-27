@@ -294,13 +294,40 @@
 
   // ---------- 予約リスト ----------
   $('btn-sel-back').onclick = function () { show('scr-title'); };
-  function unlocked(i) { return i === 0 || !!save.cleared[PATIENTS[i - 1].id] || !!save.cleared[PATIENTS[i].id]; }
+  // 物語の上で予約が入っているか（前の患者をクリア）。課金のロックとは別に数える
+  function reached(i) { return i === 0 || !!save.cleared[PATIENTS[i - 1].id] || !!save.cleared[PATIENTS[i].id]; }
+  function unlocked(i) { return reached(i) && !Paywall.locked(i); }
+
+  // ---------- 開放画面（課金ゲート。Play版だけ） ----------
+  function openPaywall(after) {
+    var rest = PATIENTS.length - Paywall.free;
+    openModal('<div class="result paywall"><h3>🔓 続きの患者さんを開放</h3>' +
+      '<p>ここまで遊んでくれてありがとうございます！<br>' + (Paywall.free + 1) + '人目〜' + PATIENTS.length + '人目の患者さん（' + rest + '人）の悩みを聞くには、開放が必要です。</p>' +
+      '<p class="big">' + Paywall.price + '（税込）・買い切り</p>' +
+      '<ul class="pw-points"><li>一度買えば、残りの患者さん' + rest + '人が全員開きます</li><li>追加の支払い・広告・月額料金はありません</li><li>機種変更のときは「購入を復元」で戻せます</li></ul>' +
+      '<p class="fb-row"><button class="btn" id="pw-buy">' + Paywall.price + 'で開放する</button></p>' +
+      '<p class="fb-row"><button class="btn ghost" id="pw-restore">購入を復元</button></p>' +
+      '<p id="pw-msg" class="small"></p></div>', 'あとで', after);
+    function done(ok, failMsg) {
+      if (ok) {
+        $('modal-body').innerHTML = '<div class="result"><h3>開放しました！</h3><p>' + (Paywall.free + 1) + '人目からの患者さんが、予約リストに入りました。</p></div>';
+      } else { $('pw-msg').textContent = failMsg; $('pw-buy').disabled = false; $('pw-restore').disabled = false; }
+    }
+    $('pw-buy').onclick = function () {
+      $('pw-buy').disabled = true; $('pw-restore').disabled = true;
+      Paywall.buy().then(function (ok) { done(ok, '購入は完了していません。'); }, function () { done(false, 'うまく購入できませんでした。少し時間をおいて、もう一度お願いします。'); });
+    };
+    $('pw-restore').onclick = function () {
+      $('pw-buy').disabled = true; $('pw-restore').disabled = true;
+      Paywall.restore().then(function (ok) { done(ok, '購入の記録が見つかりませんでした。'); }, function () { done(false, '復元できませんでした。通信できる場所でもう一度お願いします。'); });
+    };
+  }
   var listRetry = 0;
   function buildList() {
     var ul = $('patient-list'), allReady = true; ul.innerHTML = '';
     PATIENTS.forEach(function (p, i) {
-      var li = document.createElement('li'), open = unlocked(i);
-      if (!open) li.className = 'locked';
+      var li = document.createElement('li'), open = unlocked(i), paid = reached(i) && Paywall.locked(i);
+      if (!open) li.className = 'locked' + (paid ? ' paid' : '');
       var cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
       if (!Pixel.portrait(cv.getContext('2d'), p.sprite, !open)) allReady = false; // 患者ごとの顔（予約前はシルエット）
       li.appendChild(cv);
@@ -308,10 +335,13 @@
       var info = document.createElement('div'); info.className = 'info';
       info.innerHTML = open
         ? '<b>' + esc(p.name) + '</b>（' + esc(p.species) + '）<br>「' + esc(chief) + '」<br><span class="stars">' + '★'.repeat(p.difficulty) + '☆'.repeat(3 - p.difficulty) + '</span>'
-        : '<b>？？？</b><br>前の患者の悩みを解決すると予約が入ります';
+        : Paywall.locked(i)
+          ? '<b>？？？</b><br>🔒 ' + Paywall.price + '（買い切り）で' + (Paywall.free + 1) + '人目以降が全員開きます'
+          : '<b>？？？</b><br>前の患者の悩みを解決すると予約が入ります';
       li.appendChild(info);
       if (save.cleared[p.id]) { var s = document.createElement('span'); s.className = 'stamp'; s.textContent = '解決' + (save.stars[p.id] ? ' ' + '★'.repeat(save.stars[p.id]) : ''); li.appendChild(s); }
       if (open) li.onclick = function () { music(); startSession(p); };
+      else if (Paywall.locked(i)) li.onclick = function () { openPaywall(function () { buildList(); }); };
       ul.appendChild(li);
     });
     // 絵の読みこみが間に合わなかったら、少し待って描きなおす
@@ -555,11 +585,15 @@
     var scoreHtml = '<div class="score"><span class="rank r' + sc.rank + '">' + sc.rank + '</span><b>' + sc.total + '</b> 点' + (isBest ? ' <em>自己ベスト！</em>' : '') +
       '<table>' + sc.parts.map(function (x) { return '<tr><td>' + esc(x[0]) + '</td><td>' + (x[1] >= 0 ? '+' : '') + x[1] + '</td></tr>'; }).join('') + '</table></div>';
     setTimeout(function () {
-      var next = PATIENTS.indexOf(P) + 1 < PATIENTS.length ? '<p>あたらしい予約が入りました！</p>' : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
+      var idx = PATIENTS.indexOf(P), gate = idx + 1 < PATIENTS.length && Paywall.locked(idx + 1);
+      var next = idx + 1 < PATIENTS.length ? (gate ? '<p>次の患者さんから予約を開放できます！</p>' : '<p>あたらしい予約が入りました！</p>') : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
       openModal('<div class="result"><h3>カウンセリング成功！</h3><p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
         routeHtml() + scoreHtml + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '</p>' + next + '</div>' +
         '<p class="fb-row"><button class="btn" id="btn-share">📣 シェアする</button></p>' + fbButton(),
-        '予約リストへ', function () { buildList(); show('scr-select'); });
+        '予約リストへ', function () {
+          buildList(); show('scr-select');
+          if (gate) setTimeout(function () { openPaywall(function () { buildList(); }); }, 300); // 2人目をクリアしたら開放画面
+        });
       var rt = Engine.route(P, ST);
       hookFeedback({ where: '診察', patient: P.name, result: 'クリア ' + rt.key + '「' + rt.name + '」 ' + sc.total + '点', after: function () { buildList(); show('scr-select'); } });
       $('btn-share').onclick = function () { shareResult(pp, sc, function () { buildList(); show('scr-select'); }); };
