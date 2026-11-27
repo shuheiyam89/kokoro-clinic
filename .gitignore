@@ -2,3 +2,6 @@
 
 # Local Netlify folder
 .netlify
+
+# ChatGPTで作った元画像（加工したものは assets/ に入れる）
+/画像

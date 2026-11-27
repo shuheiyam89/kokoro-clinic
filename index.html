@@ -9,7 +9,7 @@
 <script>
 // 古い版がブラウザに残っていたら、最新版を読み直す
 (function () {
-  var V = '13';
+  var V = '17';
   fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (v) {
     v = v.trim();
     if (v && v !== V && sessionStorage.getItem('kokoro_reload') !== v) {
@@ -21,7 +21,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
 <div id="app">
@@ -31,8 +31,7 @@
     <div class="title-art"><canvas id="cv-title"></canvas></div>
     <div class="title-box">
       <p class="title-sub">宇宙ステーションの</p>
-      <h1>こころ診療所</h1>
-      <p class="title-sub2">～ささやきカルテ～</p>
+      <h1><img class="logo" src="img/logo.png?v=17" alt="こころ診療所 ～ささやきカルテ～"></h1>
       <button class="btn big" id="btn-start">はじめる</button>
       <div class="title-links">
         <button class="btn ghost" id="btn-howto">あそびかた</button>
@@ -46,7 +45,7 @@
   <section id="scr-opening" class="screen active">
     <canvas id="cv-op"></canvas>
     <button class="skip" id="btn-skip">スキップ ▶▶</button>
-    <div class="op-box" id="op-box"><canvas id="cv-op-nurse" width="32" height="32"></canvas><p id="op-text"></p><span class="op-next">▼</span></div>
+    <div class="op-box" id="op-box"><canvas id="cv-op-nurse" width="56" height="56"></canvas><p id="op-text"></p><span class="op-next">▼</span></div>
   </section>
 
   <!-- 予約リスト -->
@@ -73,7 +72,7 @@
     </div>
     <div class="dialog" id="dialog">
       <div class="nametag" id="d-name"></div>
-      <canvas id="cv-nurse" width="32" height="32"></canvas>
+      <canvas id="cv-nurse" width="56" height="56"></canvas>
       <p id="d-text"></p>
       <span class="next" id="d-next">▼</span>
     </div>
@@ -93,13 +92,13 @@
   <div class="modal" id="modal"><div class="sheet"><div id="modal-body"></div><button class="btn" id="modal-close">とじる</button></div></div>
 
 </div>
-<script src="js/data-patients.js?v=13"></script>
-<script src="js/data-flow.js?v=13"></script>
-<script src="js/engine.js?v=13"></script>
-<script src="js/story.js?v=13"></script>
-<script src="js/ai.js?v=13"></script>
-<script src="js/audio.js?v=13"></script>
-<script src="js/nurse-art.js?v=13"></script><script src="js/pixel.js?v=13"></script>
-<script src="js/ui.js?v=13"></script>
+<script src="js/data-patients.js?v=17"></script>
+<script src="js/data-flow.js?v=17"></script>
+<script src="js/engine.js?v=17"></script>
+<script src="js/story.js?v=17"></script>
+<script src="js/ai.js?v=17"></script>
+<script src="js/audio.js?v=17"></script>
+<script src="js/pixel.js?v=17"></script>
+<script src="js/ui.js?v=17"></script>
 </body>
 </html>

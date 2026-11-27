@@ -44,6 +44,13 @@
   var ctxScene, ctxTitle, ctxOp;
   function sizeCanvases() { ctxScene = sizeCanvas(cvScene); ctxTitle = sizeCanvas(cvTitle); ctxOp = sizeCanvas(cvOp); }
 
+  // 看護師ミケの表情：言葉の調子で選ぶ
+  var nurseMood = 'normal';
+  function moodOf(t) {
+    if (/おしい|まだ|大丈夫|気をつけ|怒|帰って/.test(t)) return 'worry';
+    if (/！/.test(t) && !/？/.test(t)) return 'happy';
+    return 'normal';
+  }
   var scene = { sprite: null, expr: 'normal', talk: false, blink: false, t: 0, alpha: 1, scale: 1 };
   var nextBlink = 2000, blinkEnd = 0;
   function active(id) { return $(id).classList.contains('active'); }
@@ -54,9 +61,9 @@
     if (active('scr-session')) {
       if (scene.fade) { scene.alpha += scene.fade; if (scene.alpha >= 1) { scene.alpha = 1; scene.fade = 0; } if (scene.alpha <= 0) { scene.alpha = 0; scene.fade = 0; } }
       Pixel.render(ctxScene, scene);
-      if (cvNurse.offsetParent) Pixel.nurse(cvNurse.getContext('2d'), ts);
+      if (cvNurse.offsetParent) Pixel.nurse(cvNurse.getContext('2d'), ts, nurseMood);
     }
-    var opN = $('cv-op-nurse'); if (opN && opN.offsetParent) Pixel.nurse(opN.getContext('2d'), ts); else if (active('scr-title')) {
+    var opN = $('cv-op-nurse'); if (opN && opN.offsetParent) Pixel.nurse(opN.getContext('2d'), ts, 'happy'); else if (active('scr-title')) {
       var p = PATIENTS[((ts / 3500) | 0) % PATIENTS.length];
       Pixel.render(ctxTitle, { sprite: p.sprite, expr: 'happy', t: ts, blink: scene.blink, scale: 1 });
     } else if (active('scr-opening')) {
@@ -295,6 +302,7 @@
     $('d-name').textContent = who === 'p' ? P.name : who === 'nurse' ? '看護師ミケ' : who === 'me' ? 'あなた'
       : who === 'think' ? (wt === 'truth' ? '💭 真実は…？' : wt === 'counsel' ? '💭 どう声をかける？' : '💭 なにを聞こう？') : '';
     if (who === 'p') { if (curLine.face) scene.expr = curLine.face; syncStatus(); }
+    if (who === 'nurse') nurseMood = moodOf(curLine.text);
     log.push({ who: who, text: curLine.text });
     if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
     var text = curLine.text, plain = text.replace(/[【】]/g, ''), i = 0, el = $('d-text');
