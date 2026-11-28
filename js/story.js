@@ -76,7 +76,8 @@ var Story = (function () {
   }
 
   // プルル（最初の患者）だけは練習なので、自動でヒントを出す。リュミエ以降はヒントボタンを押したときだけ
-  function autoHint(g) { return (g.p.difficulty || 1) <= 1; }
+  // 推理モード（案内なし）では、助手が代わりに聞く・ヒントを出すことはしない
+  function autoHint(g) { return !g.noGuide && (g.p.difficulty || 1) <= 1; }
   var THINK = ['（なにを聞いてみよう…？）', '（もう少し、話を聞いてみよう）', '（次は、なにを聞こう…）'];
   function think(g, s) {
     if (s.type !== 'ask' || autoHint(g)) return L('think', s.prompt);

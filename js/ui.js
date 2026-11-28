@@ -105,7 +105,7 @@
     }, 900);
   }
   // 1分前：看護師ミケが声をかける（入力待ちなら今すぐ、会話中なら次のせりふの前、返事待ちならその次の会話の頭に）
-  var WARN_LINE = { who: 'nurse', mood: 'worry', text: '先生、次の患者様の時間が迫っています。あと1分です！' }, pendingWarn = false;
+  var WARN_LINE = { who: 'nurse', keep: true, mood: 'worry', text: '先生、次の患者様の時間が迫っています。あと1分です！' }, pendingWarn = false;
   function nurseWarn() {
     if (waiting && !busy) { var s = waiting; setInput(null); play([WARN_LINE], function () { setInput(s); }); }
     else if (busy) queue.unshift(WARN_LINE);
@@ -310,7 +310,7 @@
   $('btn-settings').onclick = function () {
     openModal('<h3>⚙ 設定</h3>' +
       '<div class="set-row"><b>文字の出る速さ</b>' + seg('speed', [['normal', 'ふつう'], ['fast', 'はやい'], ['instant', '一瞬']], save.speed || 'normal') + '<p class="set-note">会話中に画面をタップしても、その文をすぐ全部出せます。</p></div>' +
-      '<div class="set-row"><b>💭 案内と候補ボタン</b>' + seg('guide', [['true', 'あり'], ['false', 'なし（推理モード）']], guideOn()) + '<p class="set-note">「なし」にすると、次に聞くことの案内と質問の候補が出ません。自分の力で解くと、クリア時に <b>+300点</b>。</p></div>' +
+      '<div class="set-row"><b>💭 案内と候補ボタン</b>' + seg('guide', [['true', 'あり'], ['false', 'なし（推理モード）']], guideOn()) + '<p class="set-note">「なし」にすると、次に聞くことの案内・看護師ミケの助言・質問の候補が出ません（💡ヒントは使えます）。自分の力で解くと、クリア時に <b>+300点</b>。</p></div>' +
       '<div class="set-row"><b>⏱ 診察の制限時間</b>' + seg('timer', [['true', '10分'], ['false', 'なし（ゆっくり）']], timerOn()) + '<p class="set-note">「なし」にすると、時間を気にせずじっくり話せます。</p></div>');
     document.querySelectorAll('#modal-body .seg button').forEach(function (b) {
       b.onclick = function () {
@@ -607,7 +607,8 @@
 
   // セリフを順に表示する
   function play(lines, done) {
-    if (G && G.noGuide) lines = lines.filter(function (l) { return l.who !== 'think'; });
+    // 推理モード：💭の案内と、看護師ミケの案内のせりふを出さない（💡ヒント・残り1分の声かけ・物語のせりふは出す）
+    if (G && G.noGuide) lines = lines.filter(function (l) { return l.who !== 'think' && (l.who !== 'nurse' || l.keep); });
     if (pendingWarn) { pendingWarn = false; lines = [WARN_LINE].concat(lines); }
     queue = lines.slice(); onQueueEnd = done || null; busy = true;
     nextLine();
@@ -700,7 +701,7 @@
     var s = waiting; setInput(null);
     G.hints = (G.hints || 0) + 1; // スコア用
     resetHint();
-    play(Story.hint(G), function () { setInput(s); });
+    play(Story.hint(G).map(function (l) { return l.who === 'nurse' ? Object.assign({ keep: true }, l) : l; }), function () { setInput(s); });
   };
   $('inp').addEventListener('focus', function () { setTimeout(fitHeight, 300); });
   $('inp').addEventListener('blur', function () { setTimeout(fitHeight, 100); });
