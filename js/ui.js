@@ -84,9 +84,8 @@
     timer.left -= dt;
     var sec = Math.ceil(timer.left / 1000);
     if (sec !== before) renderTimer();
-    [[180, 'のこり3分です'], [60, 'のこり1分！ そろそろ核心へ']].forEach(function (w) {
-      if (sec <= w[0] && !timer.warned[w[0]]) { timer.warned[w[0]] = true; toast('⏱ ' + w[1]); }
-    });
+    if (sec <= 180 && !timer.warned[180]) { timer.warned[180] = true; toast('⏱ のこり3分です'); }
+    if (sec <= 60 && !timer.warned[60]) { timer.warned[60] = true; nurseWarn(); }
     if (timer.left <= 0) timeUp();
   }
   // 時間切れ：会話を止めて、患者は帰ってしまう
@@ -99,6 +98,13 @@
       openModal('<div class="result gameover"><h3>TIME UP</h3><p class="big">⏱ 診察の時間が終わってしまった…</p><p>' + esc(p.name) + 'は「また来ます」と言って、帰っていった。<br>1人の診察は10分まで。聞きたいことをしぼって、もう一度ためしてみよう。</p></div>' + fbButton(), 'もう一度', function () { startSession(p); });
       hookFeedback({ where: '診察', patient: p.name, result: '時間切れ', after: function () { startSession(p); } });
     }, 900);
+  }
+  // 1分前：看護師ミケが声をかける（入力待ちなら今すぐ、会話中なら次のせりふの前、返事待ちならその次の会話の頭に）
+  var WARN_LINE = { who: 'nurse', mood: 'worry', text: '先生、次の患者様の時間が迫っています。あと1分です！' }, pendingWarn = false;
+  function nurseWarn() {
+    if (waiting && !busy) { var s = waiting; setInput(null); play([WARN_LINE], function () { setInput(s); }); }
+    else if (busy) queue.unshift(WARN_LINE);
+    else pendingWarn = true;
   }
   function hintUsed() { return !!(G && (G.hints || 0) >= 1); }
   function resetHint() {
@@ -407,7 +413,7 @@
     scene.flower = false; scene.night = (p.night || p.id === 'gald'); scene.companion = null; scene.item = null; scene.cg = null;
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
-    resetHint(); timer.left = TIME_LIMIT; timer.on = false; timer.warned = {}; renderTimer();
+    resetHint(); timer.left = TIME_LIMIT; timer.on = false; timer.warned = {}; pendingWarn = false; renderTimer();
     show('scr-session');
     $('d-text').textContent = ''; $('d-name').textContent = '';
     if (!save.tutorial) {
@@ -578,6 +584,7 @@
 
   // セリフを順に表示する
   function play(lines, done) {
+    if (pendingWarn) { pendingWarn = false; lines = [WARN_LINE].concat(lines); }
     queue = lines.slice(); onQueueEnd = done || null; busy = true;
     nextLine();
   }
@@ -613,7 +620,7 @@
       if (curLine.face) scene.expr = curLine.face; syncStatus();
     }
     if ((who === 'p' || who === 'narr') && curLine.text.indexOf('【') >= 0) { pikiin(); noteWords(curLine.text); }
-    if (who === 'nurse') nurseMood = moodOf(curLine.text);
+    if (who === 'nurse') nurseMood = curLine.mood || moodOf(curLine.text);
     log.push({ who: who, text: curLine.text, name: curLine.name });
     if (curLine.episode) toast('✦ エピソード発見！ 結末が変わるかも…');
     var text = curLine.text, plain = text.replace(/[【】]/g, ''), i = 0, el = $('d-text');
