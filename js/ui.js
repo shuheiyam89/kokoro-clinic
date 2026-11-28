@@ -14,6 +14,11 @@
   }
   applyFont();
   document.getElementById('btn-font').onclick = function () { save.big = !save.big; store(); applyFont(); };
+  // 設定：文字の速さ（ふつう／はやい／一瞬）・案内（💭と候補ボタン）・制限時間（10分／なし）
+  var SPEED_MS = { normal: 22, fast: 10, instant: 0 };
+  function speedMs() { var v = SPEED_MS[save.speed]; return v == null ? SPEED_MS.normal : v; }
+  function guideOn() { return save.guide !== false; }
+  function timerOn() { return save.timer !== false; }
 
   // ---------- スマホの画面高さ（キーボード対応） ----------
   var app = $('app');
@@ -77,7 +82,7 @@
     var el = $('s-timer'), sec = Math.max(0, Math.ceil(timer.left / 1000));
     el.textContent = '⏱ ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2);
     el.classList.toggle('low', sec <= 60 && sec > 0);
-    el.classList.toggle('off', !!(ST && ST.phase === 'done'));
+    el.classList.toggle('off', !!(ST && ST.phase === 'done') || !!(G && G.noTimer));
   }
   function tickTimer(dt) {
     var before = Math.ceil(timer.left / 1000);
@@ -172,6 +177,7 @@
       ['怒り 💢' + (st.anger || 0), -(st.anger || 0) * 100],
       ['ヒント ' + hints + '回', -hints * 100]
     ];
+    if (g.noGuide) parts.push(['案内なしボーナス', 300]);
     var total = Math.max(0, parts.reduce(function (a, x) { return a + x[1]; }, 0));
     var rank = total >= 2700 ? 'S' : total >= 2200 ? 'A' : total >= 1700 ? 'B' : 'C';
     return { total: total, rank: rank, parts: parts, route: rt };
@@ -298,6 +304,22 @@
     buildList(); show('scr-select');
   };
   $('btn-opening').onclick = function () { music(); startOpening(); };
+  function seg(key, opts, cur) {
+    return '<div class="seg" data-key="' + key + '">' + opts.map(function (o) { return '<button type="button" data-v="' + o[0] + '" class="' + (String(cur) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</div>';
+  }
+  $('btn-settings').onclick = function () {
+    openModal('<h3>⚙ 設定</h3>' +
+      '<div class="set-row"><b>文字の出る速さ</b>' + seg('speed', [['normal', 'ふつう'], ['fast', 'はやい'], ['instant', '一瞬']], save.speed || 'normal') + '<p class="set-note">会話中に画面をタップしても、その文をすぐ全部出せます。</p></div>' +
+      '<div class="set-row"><b>💭 案内と候補ボタン</b>' + seg('guide', [['true', 'あり'], ['false', 'なし（推理モード）']], guideOn()) + '<p class="set-note">「なし」にすると、次に聞くことの案内と質問の候補が出ません。自分の力で解くと、クリア時に <b>+300点</b>。</p></div>' +
+      '<div class="set-row"><b>⏱ 診察の制限時間</b>' + seg('timer', [['true', '10分'], ['false', 'なし（ゆっくり）']], timerOn()) + '<p class="set-note">「なし」にすると、時間を気にせずじっくり話せます。</p></div>');
+    document.querySelectorAll('#modal-body .seg button').forEach(function (b) {
+      b.onclick = function () {
+        var key = b.parentNode.getAttribute('data-key'), v = b.getAttribute('data-v');
+        save[key] = v === 'true' ? true : v === 'false' ? false : v; store();
+        b.parentNode.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      };
+    });
+  };
   $('btn-howto').onclick = function () {
     openModal('<h3>あそびかた</h3><ol class="howto">' +
       '<li>あなたは宇宙ステーションの「こころ診療所」のカウンセラー。いろいろな星の患者が悩みを話しにきます。</li>' +
@@ -413,6 +435,7 @@
     scene.flower = false; scene.night = (p.night || p.id === 'gald'); scene.companion = null; scene.item = null; scene.cg = null;
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
+    G.noGuide = !guideOn(); G.noTimer = !timerOn();
     resetHint(); timer.left = TIME_LIMIT; timer.on = false; timer.warned = {}; pendingWarn = false; renderTimer();
     show('scr-session');
     $('d-text').textContent = ''; $('d-name').textContent = '';
@@ -427,14 +450,14 @@
       '<li><span class="ti">💭</span><span>💭が出たら、聞きたいことを<b>下の入力欄</b>に書いて「送信」。<br>文字を打つのが大変なら、入力欄の上の<b>候補ボタン</b>をタップするだけでもOK。</span></li>' +
       '<li><span class="ti">❤️</span><span>上の<b>♥信頼度</b>は、やさしい言葉で上がります。<b>💢怒り</b>が満タンになると、患者は帰ってしまいます。</span></li>' +
       '<li><span class="ti">📋</span><span><b>赤い字</b>は大事な手がかり。📋カルテにたまります。気になる持ち物などを聞くと<b>✦エピソード</b>が起き、結末が変わります。</span></li>' +
-      '<li><span class="ti">⏱</span><span>1人の診察は<b>10分</b>まで。時間が来ると患者は帰ってしまいます（右上に残り時間）。</span></li>' +
+      '<li><span class="ti">⏱</span><span>1人の診察は<b>10分</b>まで。時間が来ると患者は帰ってしまいます（右上に残り時間）。タイトル画面の「⚙ 設定」で、時間なし・文字の速さ・案内なし（推理モード）を選べます。</span></li>' +
       '<li><span class="ti">💡</span><span>困ったら<b>💡ヒント</b>。使えるのは<b>1回だけ</b>です。</span></li></ol>' +
       '<p class="tut-note">字が小さいときは、タイトル画面の「🔠 文字」で大きくできます。</p>';
   }
 
   // 台本を入力待ちまで進める（あなたの声かけ say も、AIが患者の返事を作る）
   function advance() {
-    if (!timer.on && timer.left === TIME_LIMIT) timer.on = true; // はじめの会話から時間を計る
+    if (!timer.on && timer.left === TIME_LIMIT && !G.noTimer) timer.on = true; // はじめの会話から時間を計る
     var r = Story.run(G, { ai: true });
     play(r.lines, function () {
       syncStatus();
@@ -512,8 +535,8 @@
   }
   function renderChips(s) {
     var box = $('chips'); box.innerHTML = '';
-    box.classList.toggle('on', !!s);
-    if (!s) return;
+    box.classList.toggle('on', !!s && !(G.noGuide && s.type === 'ask'));
+    if (!s || (G.noGuide && s.type === 'ask')) return;
     G.usedChips = G.usedChips || {}; G.usedWords = G.usedWords || {};
     var send = function (t, mark) { return function () { mark(); var k = waiting.type; setInput(null); speak(t, k); }; };
     if (s.type === 'ask') {
@@ -532,7 +555,7 @@
           var inp = $('inp'); inp.value = (inp.value ? inp.value + '、' : '') + w; inp.scrollLeft = inp.scrollWidth;
         }));
       });
-      if (s.type === 'counsel') COUNSEL_CHIPS.forEach(function (c) { box.appendChild(chip(c, '', send(c, function () {}))); });
+      if (s.type === 'counsel' && !G.noGuide) COUNSEL_CHIPS.forEach(function (c) { box.appendChild(chip(c, '', send(c, function () {}))); });
     }
     box.scrollLeft = 0;
   }
@@ -584,6 +607,7 @@
 
   // セリフを順に表示する
   function play(lines, done) {
+    if (G && G.noGuide) lines = lines.filter(function (l) { return l.who !== 'think'; });
     if (pendingWarn) { pendingWarn = false; lines = [WARN_LINE].concat(lines); }
     queue = lines.slice(); onQueueEnd = done || null; busy = true;
     nextLine();
@@ -627,10 +651,11 @@
     el.textContent = '';
     scene.talk = who === 'p';
     clearInterval(typing);
+    if (!speedMs()) { finishTyping(); return; } // 一瞬で全部出す
     typing = setInterval(function () {
-      i++; el.innerHTML = rich(text, i);
+      i += save.speed === 'fast' ? 2 : 1; el.innerHTML = rich(text, i);
       if (i >= plain.length) finishTyping();
-    }, 30);
+    }, speedMs());
   }
   // 【】でかこんだ大事なフレーズを赤字にする（n = 表示する文字数）
   function rich(text, n) {
@@ -688,10 +713,40 @@
       var p = P; hookFeedback({ where: '診察', patient: p.name, result: '怒って帰った', after: function () { startSession(p); } });
     }, 900);
   }
+  // 見のがしたエピソードの手がかり（答えそのものは言わず、聞く方向だけ）
+  var EP_HINT = {
+    'pururu.work': 'プルルのお仕事のことを聞いてみよう',
+    'pururu.message': '♥2つ以上で、鳴っていた通信機のことを聞いてみよう',
+    'lumie.rule': '♥3つ以上で、里の決まりや言い伝えのことを聞いてみよう',
+    'lumie.gift': '♥3つ以上で、町で出会った人の話のあと、大切に持っている物のことを聞いてみよう',
+    'gald.drawing': '♥2つ以上で、ガルドが大事そうに持っている物のことを聞いてみよう',
+    'gald.wife': '♥3つ以上で、ガルドの奥さんのことを聞いてみよう',
+    'konoha.photo': '♥2つ以上で、通信機の待ち受け写真のことを聞いてみよう',
+    'konoha.boss': '♥3つ以上で、夜のお仕事の話のあと、お店の店長のことを聞いてみよう',
+    'mii.misanga': '♥2つ以上で、手首につけている物のことを聞いてみよう',
+    'mii.letter': '♥3つ以上で、リュックにしまってある物のことを聞いてみよう',
+    'noa.spanner': '♥2つ以上で、ノアの工具のことを聞いてみよう',
+    'noa.musicbox': '♥3つ以上で、歌の話のあと、オルゴールのことを聞いてみよう'
+  };
+  // 結果画面の絵（★★★なら結末の1枚絵、それ以外は笑顔の患者さん）
+  function resultArt() {
+    var r = Engine.route(P, ST);
+    if (r.key === 'best') return '<div class="res-art"><img src="img/end_' + P.id + '.webp?v=' + (window.V || '') + '" alt=""></div>';
+    try {
+      var c = document.createElement('canvas'); c.width = Pixel.W * 3; c.height = Pixel.H * 3;
+      var x = c.getContext('2d'); x.setTransform(3, 0, 0, 3, 0, 0);
+      Pixel.render(x, { sprite: P.sprite, expr: 'happy', t: 0, alpha: 1, night: scene.night, companion: scene.companion ? { key: scene.companion.key, face: scene.companion.face, t0: -1e9 } : null });
+      return '<div class="res-art"><img src="' + c.toDataURL('image/jpeg', 0.85) + '" alt=""></div>';
+    } catch (e) { return ''; }
+  }
   function routeHtml() {
     var r = Engine.route(P, ST), stars = r.key === 'best' ? '★★★' : r.key === 'good' ? '★★☆' : '★☆☆';
     var more = r.found < r.total ? '<br><small>ちがう質問をすると、べつの結末が見られるかも…</small>' : '<br><small>すべてのエピソードを見つけた！</small>';
-    return '<p class="route">' + stars + ' エンディング「' + esc(r.name) + '」<br>見つけたエピソード：' + r.found + ' / ' + r.total + more + '</p>';
+    var missed = P.topics.filter(function (t) { return t.episode && !ST.seen[t.id]; }).map(function (t) {
+      return '<li>？？？ … ' + esc(EP_HINT[P.id + '.' + t.id] || '気になる持ち物や、話に出てきたものについて聞いてみよう') + '</li>';
+    });
+    var miss = missed.length ? '<div class="missed"><b>💡 見のがしたエピソードの手がかり</b><ul style="margin:4px 0 0;padding-left:1.2em">' + missed.join('') + '</ul></div>' : '';
+    return '<p class="route">' + stars + ' エンディング「' + esc(r.name) + '」<br>見つけたエピソード：' + r.found + ' / ' + r.total + more + '</p>' + miss;
   }
   function finish() {
     timer.on = false;
@@ -708,7 +763,7 @@
     setTimeout(function () {
       var idx = PATIENTS.indexOf(P), gate = idx + 1 < PATIENTS.length && Paywall.locked(idx + 1);
       var next = idx + 1 < PATIENTS.length ? (gate ? '<p>次の患者さんから予約を開放できます！</p>' : '<p>あたらしい予約が入りました！</p>') : '<p>本日の予約はすべて終わりました。おつかれさまでした！</p>';
-      openModal('<div class="result"><h3>カウンセリング成功！</h3><p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
+      openModal('<div class="result"><h3>カウンセリング成功！</h3>' + resultArt() + '<p class="big">' + esc(P.name) + 'の悩みが晴れた</p>' +
         routeHtml() + scoreHtml + '<p>集めた手がかり：' + ST.clues.length + ' / ' + total + '</p>' + next + '</div>' +
         '<p class="fb-row"><button class="btn" id="btn-share">📣 シェアする</button></p>' + fbButton(),
         '予約リストへ', function () {

@@ -1,5 +1,5 @@
 // 課金ゲート（Google Play 版だけで有効にする）
-//   - 患者1〜2人目は無料。3人目以降（3〜6人目）は 600円の買い切り（1回の購入で残り全員を開放）
+//   - 患者1〜2人目は無料。3人目以降（3〜6人目）は 500円の買い切り（1回の購入で残り全員を開放）
 //   - 広告・サブスクはなし
 //   - Web 公開版（GitHub Pages）はフラグ無効＝今までどおり全員遊べる
 //
@@ -18,7 +18,7 @@ var Paywall = (function () {
   var q = location.search;
   var ENABLED = !!CONFIG.enabled || /[?&]paywall=1\b/.test(q);
   var FREE = 2;                                  // 無料の患者の人数
-  var PRICE = '600円';
+  var PRICE = '500円';
   var PRODUCT_ID = CONFIG.productId || 'unlock_all_patients'; // Play Console の「アプリ内アイテム（買い切り）」の商品ID
   var KEY = 'kokoro_clinic_unlock_v1';           // 購入済みの印（端末に保存）
 
