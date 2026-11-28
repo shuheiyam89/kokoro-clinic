@@ -195,9 +195,9 @@ if __name__ == '__main__':
             if n != 'noa':
                 blink(n, base)
         sheet('moti', 3, 1, 100, 'moti', ['pout', 'happy', 'weak'])
-        sheet('thomas', 3, 1, 146, 'thomas', ['smile', 'shy', 'surprise'])
-        sheet('rino', 3, 1, 90, 'rino', ['happy', 'surprise', 'sad'])
-        sheet('cast2', 3, 1, 142, 'cast2', ['mother_smile', 'pipi_smile', 'harumo_smile'])
+        sheet('thomas', 3, 1, 184, 'thomas', ['smile', 'shy', 'surprise'])
+        sheet('rino', 3, 1, 100, 'rino', ['happy', 'surprise', 'sad'])
+        sheet('cast2', 3, 1, 178, 'cast2', ['mother_smile', 'pipi_smile', 'harumo_smile'])
         for a in ['mother', 'pipi', 'harumo']:
             os.replace(os.path.join(OUT, 'cast2_%s_smile.webp' % a), os.path.join(OUT, '%s_smile.webp' % a))
     if want('items'):

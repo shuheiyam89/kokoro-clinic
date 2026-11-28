@@ -27,8 +27,8 @@ var Pixel = (function () {
   });
   ['normal', 'happy', 'worry'].forEach(function (f) { load('nurse_icon_' + f); });
   // 物語に出てくる人たち（となりに登場）と、エピソードの品物、結末の1枚絵
-  var COMP = { moti: { x: 214, bottom: 180, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 236, bottom: 222, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 230, bottom: 220, faces: ['happy', 'surprise', 'sad'] },
-    mother: { x: 236, bottom: 222, faces: ['smile'] }, pipi: { x: 232, bottom: 222, faces: ['smile'] }, harumo: { x: 236, bottom: 222, faces: ['smile'], alpha: 0.85 } };
+  var COMP = { moti: { x: 214, bottom: 180, faces: ['pout', 'happy', 'weak'] }, thomas: { x: 238, bottom: 224, faces: ['smile', 'shy', 'surprise'] }, rino: { x: 232, bottom: 222, faces: ['happy', 'surprise', 'sad'] },
+    mother: { x: 238, bottom: 224, faces: ['smile'] }, pipi: { x: 234, bottom: 224, faces: ['smile'] }, harumo: { x: 238, bottom: 224, faces: ['smile'], alpha: 0.85 } };
   Object.keys(COMP).forEach(function (k) { COMP[k].faces.forEach(function (f) { load(k + '_' + f); }); });
   ['bread', 'comm', 'flower', 'drawing', 'photo', 'inari', 'misanga', 'letter', 'spanner', 'musicbox'].forEach(function (k) { load('item_' + k); });
   ['end_pururu', 'end_lumie', 'end_gald', 'end_konoha', 'end_mii', 'end_noa'].forEach(load);

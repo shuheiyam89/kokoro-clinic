@@ -432,7 +432,7 @@
     setTimeout(function () {
       if (done) return;
       var dlg = $('dialog');
-      dlg.className = 'dialog p'; $('d-name').textContent = P.name; scene.talk = false;
+      dlg.className = 'dialog p'; $('d-name').textContent = P.name; $('d-text').textContent = '…　'; scene.talk = false; // 名前と同時に文も消す（あなたの文が相手のせりふに見えないように）
       timer = setInterval(function () { dots = (dots + 1) % 4; $('d-text').textContent = '……'.slice(0, 1 + dots % 2) + '　'; }, 350);
     }, 150);
   }
