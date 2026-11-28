@@ -67,6 +67,11 @@ canvas { display: block; }
 .stage canvas { width: 100%; }
 .phase-tag { position: absolute; left: 8px; top: 8px; font-size: 12px; background: rgba(255,248,236,.92); padding: 3px 10px; border-radius: 999px; color: #8a4f2a; box-shadow: 0 1px 4px rgba(120,80,40,.2); }
 .phase-tag:empty { display: none; }
+/* 診察の残り時間（右上） */
+.timer { position: absolute; right: 8px; top: 8px; font-size: 13px; font-weight: 700; background: rgba(255,248,236,.92); color: #6b4a36; padding: 3px 10px; border-radius: 999px; box-shadow: 0 1px 4px rgba(120,80,40,.2); font-variant-numeric: tabular-nums; }
+.timer.low { color: #fff; background: #e0603a; animation: pulse 1s infinite; }
+.timer.off { display: none; }
+.tool.hint small { font-size: 10px; margin-left: 3px; opacity: .8; }
 .phase-tag.counsel { background: #d9568a; color: #fff; }
 .toast { position: absolute; left: 8px; right: 8px; bottom: 8px; background: rgba(255,246,230,.96); color: #3a2a20; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.4; opacity: 0; transform: translateY(8px); transition: .3s; pointer-events: none; }
 .toast.show { opacity: 1; transform: none; }

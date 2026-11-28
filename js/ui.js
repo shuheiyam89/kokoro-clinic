@@ -69,7 +69,46 @@
   var scene = { fx: true, sprite: null, expr: 'normal', talk: false, blink: false, t: 0, alpha: 1, scale: 1 };
   var nextBlink = 2000, blinkEnd = 0;
   function active(id) { return $(id).classList.contains('active'); }
+
+  // ---------- 診察の制限時間（1人10分）とヒント（1回） ----------
+  // ?time=秒 で短くできる（動作確認用）
+  var TIME_LIMIT = (Number((location.search.match(/[?&]time=(\d+)/) || [])[1]) || 600) * 1000, timer = { left: TIME_LIMIT, on: false, warned: {} }, lastTs = 0;
+  function renderTimer() {
+    var el = $('s-timer'), sec = Math.max(0, Math.ceil(timer.left / 1000));
+    el.textContent = '⏱ ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2);
+    el.classList.toggle('low', sec <= 60 && sec > 0);
+    el.classList.toggle('off', !!(ST && ST.phase === 'done'));
+  }
+  function tickTimer(dt) {
+    var before = Math.ceil(timer.left / 1000);
+    timer.left -= dt;
+    var sec = Math.ceil(timer.left / 1000);
+    if (sec !== before) renderTimer();
+    [[180, 'のこり3分です'], [60, 'のこり1分！ そろそろ核心へ']].forEach(function (w) {
+      if (sec <= w[0] && !timer.warned[w[0]]) { timer.warned[w[0]] = true; toast('⏱ ' + w[1]); }
+    });
+    if (timer.left <= 0) timeUp();
+  }
+  // 時間切れ：会話を止めて、患者は帰ってしまう
+  function timeUp() {
+    timer.on = false; timer.left = 0; renderTimer();
+    talkSeq++; clearInterval(typing); typing = null; queue = []; onQueueEnd = null; busy = false;
+    setInput(null); $('inp').blur(); scene.fade = -0.03;
+    setTimeout(function () {
+      var p = P;
+      openModal('<div class="result gameover"><h3>TIME UP</h3><p class="big">⏱ 診察の時間が終わってしまった…</p><p>' + esc(p.name) + 'は「また来ます」と言って、帰っていった。<br>1人の診察は10分まで。聞きたいことをしぼって、もう一度ためしてみよう。</p></div>' + fbButton(), 'もう一度', function () { startSession(p); });
+      hookFeedback({ where: '診察', patient: p.name, result: '時間切れ', after: function () { startSession(p); } });
+    }, 900);
+  }
+  function hintUsed() { return !!(G && (G.hints || 0) >= 1); }
+  function resetHint() {
+    var b = $('btn-hint');
+    b.innerHTML = hintUsed() ? '💡 使用済み' : '💡 ヒント<small>1回</small>';
+    if (hintUsed()) b.disabled = true;
+  }
   function loop(ts) {
+    var dt = Math.min(1000, ts - (lastTs || ts)); lastTs = ts;
+    if (timer.on && active('scr-session') && !document.hidden) tickTimer(dt);
     scene.t = ts;
     if (ts > nextBlink) { blinkEnd = ts + 130; nextBlink = ts + 2200 + Math.random() * 2500; }
     scene.blink = ts < blinkEnd;
@@ -368,6 +407,7 @@
     scene.flower = false; scene.night = (p.night || p.id === 'gald'); scene.companion = null; scene.item = null; scene.cg = null;
     $('s-name').textContent = p.name; $('s-species').textContent = p.species;
     setInput(null); renderTrust(0); renderAnger(0); updateBadge();
+    resetHint(); timer.left = TIME_LIMIT; timer.on = false; timer.warned = {}; renderTimer();
     show('scr-session');
     $('d-text').textContent = ''; $('d-name').textContent = '';
     if (!save.tutorial) {
@@ -381,12 +421,14 @@
       '<li><span class="ti">💭</span><span>💭が出たら、聞きたいことを<b>下の入力欄</b>に書いて「送信」。<br>文字を打つのが大変なら、入力欄の上の<b>候補ボタン</b>をタップするだけでもOK。</span></li>' +
       '<li><span class="ti">❤️</span><span>上の<b>♥信頼度</b>は、やさしい言葉で上がります。<b>💢怒り</b>が満タンになると、患者は帰ってしまいます。</span></li>' +
       '<li><span class="ti">📋</span><span><b>赤い字</b>は大事な手がかり。📋カルテにたまります。気になる持ち物などを聞くと<b>✦エピソード</b>が起き、結末が変わります。</span></li>' +
-      '<li><span class="ti">💡</span><span>困ったら<b>💡ヒント</b>。</span></li></ol>' +
+      '<li><span class="ti">⏱</span><span>1人の診察は<b>10分</b>まで。時間が来ると患者は帰ってしまいます（右上に残り時間）。</span></li>' +
+      '<li><span class="ti">💡</span><span>困ったら<b>💡ヒント</b>。使えるのは<b>1回だけ</b>です。</span></li></ol>' +
       '<p class="tut-note">字が小さいときは、タイトル画面の「🔠 文字」で大きくできます。</p>';
   }
 
   // 台本を入力待ちまで進める（あなたの声かけ say も、AIが患者の返事を作る）
   function advance() {
+    if (!timer.on && timer.left === TIME_LIMIT) timer.on = true; // はじめの会話から時間を計る
     var r = Story.run(G, { ai: true });
     play(r.lines, function () {
       syncStatus();
@@ -442,7 +484,7 @@
     var bar = $('form'), tag = $('phase-tag'), inp = $('inp');
     var type = s ? s.type : null;
     bar.className = 'inputbar' + (s ? ' wait' : '') + (type === 'truth' ? ' diagnose' : type === 'counsel' ? ' counsel' : '');
-    inp.disabled = !s; $('btn-send').disabled = !s; $('btn-hint').disabled = !s;
+    inp.disabled = !s; $('btn-send').disabled = !s; $('btn-hint').disabled = !s || hintUsed();
     inp.placeholder = !s ? '（会話を聞いています…）' : type === 'truth' ? 'あなたが隠しているのは…' : type === 'counsel' ? 'さいごに声をかける…' : '質問を入力…';
     renderChips(s);
     tag.className = 'phase-tag' + (type === 'counsel' ? ' counsel' : '');
@@ -622,15 +664,17 @@
     speak(text, kind);
   };
   $('btn-hint').onclick = function () {
-    if (busy || !waiting) return;
+    if (busy || !waiting || hintUsed()) return;
     var s = waiting; setInput(null);
     G.hints = (G.hints || 0) + 1; // スコア用
+    resetHint();
     play(Story.hint(G), function () { setInput(s); });
   };
   $('inp').addEventListener('focus', function () { setTimeout(fitHeight, 300); });
   $('inp').addEventListener('blur', function () { setTimeout(fitHeight, 100); });
 
   function leftPatient() {
+    timer.on = false;
     setInput(null); scene.fade = -0.03; $('inp').blur();
     setTimeout(function () {
       openModal('<div class="result gameover"><h3>GAME OVER</h3><p class="big">💢 ' + esc(P.name) + 'は怒って帰ってしまった…</p><p>怒りメーターが満タンになってしまった。<br>相手が嫌がる言い方をしていなかったか、思い出してみよう。</p></div>' + fbButton(), 'もう一度', function () { startSession(P); });
@@ -643,6 +687,7 @@
     return '<p class="route">' + stars + ' エンディング「' + esc(r.name) + '」<br>見つけたエピソード：' + r.found + ' / ' + r.total + more + '</p>';
   }
   function finish() {
+    timer.on = false;
     setInput(null); $('inp').blur();
     if (P.id === 'lumie') scene.flower = true;
     scene.expr = 'happy';
